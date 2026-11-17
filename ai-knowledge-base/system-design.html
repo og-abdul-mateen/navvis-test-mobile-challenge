@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System design</title>
+<style>
+  :root {
+    --bg: #fafaf8;
+    --text: #1d1d1b;
+    --muted: #5f5f5a;
+    --line: #8a8a83;
+    --border: #d9d8d2;
+    --band: #f0efea;
+    --box: #ffffff;
+    --accent: #2d5f8a;
+    --code-bg: #efeee9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1a19;
+      --text: #e8e7e2;
+      --muted: #a3a29c;
+      --line: #85847e;
+      --border: #3a3a37;
+      --band: #232322;
+      --box: #2b2b29;
+      --accent: #7fb0dc;
+      --code-bg: #262624;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1a19;
+    --text: #e8e7e2;
+    --muted: #a3a29c;
+    --line: #85847e;
+    --border: #3a3a37;
+    --band: #232322;
+    --box: #2b2b29;
+    --accent: #7fb0dc;
+    --code-bg: #262624;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 800px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 1.8rem; margin: 0 0 8px; }
+  h2 { font-size: 1.2rem; margin: 40px 0 12px; }
+  p, li { color: var(--text); }
+  .lede { color: var(--muted); margin-top: 0; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
+  pre code { background: none; padding: 0; }
+  figure { margin: 24px 0; }
+  svg { width: 100%; height: auto; display: block; }
+  figcaption { color: var(--muted); font-size: 0.9rem; margin-top: 8px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  td:first-child { white-space: nowrap; }
+
+  .band { fill: var(--band); }
+  .band-label { fill: var(--muted); font-size: 12px; letter-spacing: 0.04em; }
+  .box { fill: var(--box); stroke: var(--border); stroke-width: 1.2; }
+  .box-ext { fill: none; stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .name { fill: var(--text); font-size: 14px; font-weight: 600; }
+  .sub { fill: var(--muted); font-size: 11.5px; }
+  .edge { stroke: var(--line); stroke-width: 1.4; fill: none; }
+  .edge-label { fill: var(--accent); font-size: 11.5px; }
+  .head { fill: var(--line); }
+</style>
+</head>
+<body>
+<main>
+  <h1>System design</h1>
+  <p class="lede">Proposed architecture for the NavVis mobile challenge (Android, Kotlin, Jetpack Compose).</p>
+
+  <p>The app is one Gradle module split into three packages: <code>ui</code>, <code>domain</code> and <code>data</code>. Each layer only calls the layer below it. The domain package is plain Kotlin with no Android imports, so it can be tested with JUnit alone.</p>
+
+  <h2>Diagram</h2>
+  <figure>
+    <svg viewBox="0 0 760 470" role="img" aria-label="Architecture diagram with UI, domain and data layers">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path class="head" d="M0,0 L10,5 L0,10 z"/>
+        </marker>
+      </defs>
+
+      <!-- UI layer -->
+      <rect class="band" x="10" y="10" width="740" height="115" rx="10"/>
+      <text class="band-label" x="24" y="32">UI</text>
+      <rect class="box" x="40" y="48" width="220" height="56" rx="8"/>
+      <text class="name" x="150" y="72" text-anchor="middle">StreamScreen</text>
+      <text class="sub" x="150" y="90" text-anchor="middle">Compose, LazyColumn</text>
+      <rect class="box" x="460" y="48" width="260" height="56" rx="8"/>
+      <text class="name" x="590" y="72" text-anchor="middle">StreamViewModel</text>
+      <text class="sub" x="590" y="90" text-anchor="middle">row store, pairing, StateFlow</text>
+      <line class="edge" x1="460" y1="66" x2="262" y2="66" marker-end="url(#arrow)"/>
+      <text class="edge-label" x="360" y="60" text-anchor="middle">UiState</text>
+      <line class="edge" x1="260" y1="88" x2="458" y2="88" marker-end="url(#arrow)"/>
+      <text class="edge-label" x="360" y="104" text-anchor="middle">retry</text>
+
+      <!-- Domain layer -->
+      <rect class="band" x="10" y="145" width="740" height="115" rx="10"/>
+      <text class="band-label" x="24" y="167">DOMAIN</text>
+      <rect class="box" x="40" y="183" width="160" height="56" rx="8"/>
+      <text class="name" x="120" y="207" text-anchor="middle">NumberParser</text>
+      <text class="sub" x="120" y="225" text-anchor="middle">bits to section, item</text>
+      <rect class="box" x="215" y="183" width="160" height="56" rx="8"/>
+      <text class="name" x="295" y="207" text-anchor="middle">ResultComputer</text>
+      <text class="sub" x="295" y="225" text-anchor="middle">background, cached</text>
+      <rect class="box" x="390" y="183" width="190" height="56" rx="8"/>
+      <text class="name" x="485" y="207" text-anchor="middle">SectionListBuilder</text>
+      <text class="sub" x="485" y="225" text-anchor="middle">group and sort</text>
+      <line class="edge" x1="520" y1="104" x2="520" y2="143" marker-end="url(#arrow)"/>
+      <text class="edge-label" x="528" y="130">calls all three</text>
+
+      <!-- Data layer -->
+      <rect class="band" x="10" y="280" width="740" height="180" rx="10"/>
+      <text class="band-label" x="24" y="302">DATA</text>
+      <line class="edge" x1="680" y1="104" x2="680" y2="316" marker-end="url(#arrow)"/>
+      <text class="edge-label" x="672" y="273" text-anchor="end">collects Flow of chunks</text>
+      <rect class="box" x="480" y="318" width="240" height="56" rx="8"/>
+      <text class="name" x="600" y="342" text-anchor="middle">StreamRepository</text>
+      <text class="sub" x="600" y="360" text-anchor="middle">paging loop, retry with backoff</text>
+      <rect class="box" x="200" y="318" width="220" height="56" rx="8"/>
+      <text class="name" x="310" y="342" text-anchor="middle">StreamApi</text>
+      <text class="sub" x="310" y="360" text-anchor="middle">OkHttp, tolerant JSON decoding</text>
+      <line class="edge" x1="480" y1="346" x2="422" y2="346" marker-end="url(#arrow)"/>
+
+      <rect class="box" x="60" y="398" width="180" height="46" rx="8"/>
+      <text class="name" x="150" y="420" text-anchor="middle">MockInterceptor</text>
+      <text class="sub" x="150" y="436" text-anchor="middle">mock build</text>
+      <rect class="box-ext" x="280" y="398" width="180" height="46" rx="8"/>
+      <text class="name" x="370" y="420" text-anchor="middle">navvis.com</text>
+      <text class="sub" x="370" y="436" text-anchor="middle">real build (404 today)</text>
+      <line class="edge" x1="280" y1="374" x2="170" y2="396" marker-end="url(#arrow)"/>
+      <line class="edge" x1="340" y1="374" x2="360" y2="396" marker-end="url(#arrow)"/>
+    </svg>
+    <figcaption>Arrows point in the direction of the call. The one exception is UiState, which the screen observes. Data comes back up as Kotlin flows.</figcaption>
+  </figure>
+
+  <h2>Components</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Class</th><th>Job</th></tr></thead>
+    <tbody>
+      <tr><td><code>StreamScreen</code></td><td>Draws section headers and rows in a <code>LazyColumn</code>. Shows each stream's status, a count of skipped numbers, and a Retry button when a stream fails. Contains no logic.</td></tr>
+      <tr><td><code>StreamViewModel</code></td><td>Collects both streams, stores rows by index, pairs number <code>i</code> with input <code>i</code>, asks for results, and exposes one <code>StateFlow&lt;UiState&gt;</code>.</td></tr>
+      <tr><td><code>NumberParser</code></td><td>Turns a raw JSON value into section, item and result flag, or marks it invalid.</td></tr>
+      <tr><td><code>ResultComputer</code></td><td>Runs the slow computation on <code>Dispatchers.Default</code> with a cap on parallel jobs, a timeout, and a cache keyed by input value.</td></tr>
+      <tr><td><code>SectionListBuilder</code></td><td>Groups rows by section and sorts them by the rules in <code>assumptions.md</code>.</td></tr>
+      <tr><td><code>StreamRepository</code></td><td>Requests chunks in a loop until it gets an empty array. Retries failed requests with exponential backoff and jitter. Exposes <code>numbers()</code> and <code>inputs()</code> as flows.</td></tr>
+      <tr><td><code>StreamApi</code></td><td>Makes the HTTP call and decodes the array element by element, so one bad value doesn't drop the whole chunk.</td></tr>
+      <tr><td><code>MockInterceptor</code></td><td>OkHttp interceptor that returns fake responses for a chosen scenario (truncation, nulls, server errors, a large dataset).</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>How data moves</h2>
+  <ol>
+    <li>The ViewModel starts collecting <code>numbers()</code> and <code>inputs()</code> in parallel inside <code>viewModelScope</code>.</li>
+    <li>Each chunk is appended to the row store at the next free index. Numbers are parsed as they arrive.</li>
+    <li>If a row needs a result and its input has arrived, the ViewModel asks <code>ResultComputer</code> for it. Until then the row shows as pending.</li>
+    <li>Every change marks the store as dirty. A single collector rebuilds the sorted list off the main thread at most once every 100 ms and publishes it as <code>UiState</code>.</li>
+    <li>If a stream still fails after its retries, its status becomes failed. Retry picks up from the last index received.</li>
+  </ol>
+
+  <h2>Design decisions</h2>
+  <ul>
+    <li>One module with packages per layer. Splitting into Gradle modules would add build setup without much benefit at this size.</li>
+    <li>Manual dependency injection through a small <code>AppContainer</code>. Hilt would work, but it is a lot of setup for eight classes.</li>
+    <li>The mock sits inside OkHttp, so mock mode still runs the real decoding and retry code. A <code>mock</code> and a <code>real</code> product flavor pick which one is installed.</li>
+    <li>The list is rebuilt on a timer, not on every event. With hundreds of results finishing per second, rebuilding on each one would waste CPU and cause visible jank.</li>
+  </ul>
+
+  <h2>Package layout</h2>
+<pre><code>com.navvistest.mobilechallenge
+├── ui/          StreamScreen, StreamViewModel, UiState
+├── domain/      NumberParser, ResultComputer, SectionListBuilder, models
+├── data/        StreamRepository, StreamApi, DTOs
+│   └── mock/    MockInterceptor, scenarios
+└── di/          AppContainer</code></pre>
+</main>
+</body>
+</html>
