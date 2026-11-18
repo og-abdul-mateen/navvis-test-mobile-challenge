@@ -3,6 +3,7 @@ package com.navvistest.mobilechallenge.di
 import com.navvistest.mobilechallenge.data.ApiConfig
 import com.navvistest.mobilechallenge.data.StreamApi
 import com.navvistest.mobilechallenge.data.StreamRepository
+import com.navvistest.mobilechallenge.data.mock.MockInterceptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -20,6 +21,10 @@ class AppContainer(val apiConfig: ApiConfig) {
         .readTimeout(10, TimeUnit.SECONDS)
         // Upper limit for the whole request, including reading the body.
         .callTimeout(15, TimeUnit.SECONDS)
+        .apply {
+            // The mock answers before any request reaches the network.
+            if (apiConfig.useMock) addInterceptor(MockInterceptor())
+        }
         .build()
 
     private val streamApi = StreamApi(httpClient, apiConfig.baseUrl.toHttpUrl())
