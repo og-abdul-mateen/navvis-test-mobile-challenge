@@ -2,6 +2,7 @@ package com.navvistest.mobilechallenge.di
 
 import com.navvistest.mobilechallenge.data.ApiConfig
 import com.navvistest.mobilechallenge.data.StreamApi
+import com.navvistest.mobilechallenge.data.StreamRepository
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -21,5 +22,7 @@ class AppContainer(val apiConfig: ApiConfig) {
         .callTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    val streamApi = StreamApi(httpClient, apiConfig.baseUrl.toHttpUrl())
+    private val streamApi = StreamApi(httpClient, apiConfig.baseUrl.toHttpUrl())
+
+    val streamRepository = StreamRepository(streamApi)
 }
