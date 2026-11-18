@@ -16,10 +16,11 @@ import com.navvistest.mobilechallenge.R
 import com.navvistest.mobilechallenge.ui.theme.MobileChallengeTheme
 
 /**
- * Temporary screen until the stream list is built (NAV-9).
+ * Temporary screen until the stream list is built.
+ * [summary] is a one-line description of the current state, to check the ViewModel works.
  */
 @Composable
-fun PlaceholderScreen(useMock: Boolean, modifier: Modifier = Modifier) {
+fun PlaceholderScreen(useMock: Boolean, summary: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -36,6 +37,23 @@ fun PlaceholderScreen(useMock: Boolean, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Text(
+            text = summary,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+    }
+}
+
+/** Not translated on purpose: this text goes away with the placeholder. */
+fun UiState.summary(): String = when (this) {
+    UiState.Loading -> "Loading"
+    is UiState.Empty -> "Empty, $skippedCount skipped"
+    is UiState.Error -> "Error: $error"
+    is UiState.Content -> buildString {
+        append("$rowCount rows in ${sections.size} sections, $skippedCount skipped")
+        append(if (isFetching) ", fetching" else ", done")
+        failure?.let { append(", ${it.stream} failed: ${it.error}") }
     }
 }
 
@@ -43,6 +61,6 @@ fun PlaceholderScreen(useMock: Boolean, modifier: Modifier = Modifier) {
 @Composable
 private fun PlaceholderScreenPreview() {
     MobileChallengeTheme {
-        PlaceholderScreen(useMock = true)
+        PlaceholderScreen(useMock = true, summary = UiState.Loading.summary())
     }
 }
