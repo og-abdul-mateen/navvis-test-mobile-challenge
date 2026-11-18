@@ -88,7 +88,7 @@ Tests: the six examples; the edges 0 and 255; null, -1, 256, 1.5; an item value 
 Branch: `feature/domain-layer`
 Depends on: NAV-1
 
-Add `ResultComputer`. It validates the input (0 to 65535, integer, not null) and returns the last two digits as a zero-padded string. Run it on `Dispatchers.Default` with parallelism limited to the number of CPU cores. Add a stand-in delay of a few milliseconds with an occasional slow outlier, a 2 second timeout, and a cache keyed by input value.
+Add `ResultComputer`. It validates the input (0 to 65535, integer, not null) and returns the last two digits as a zero-padded string. Run it on `Dispatchers.Default` with parallelism limited to the number of CPU cores. Add a simulated delay of a few milliseconds with an occasional slow outlier, a 2 second timeout, and a cache keyed by input value.
 
 Done when:
 - 4123 gives "23" and 1 gives "01"

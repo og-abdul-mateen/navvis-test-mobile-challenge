@@ -106,7 +106,7 @@ Other rules:
 
 ## 6. Computing results
 
-### 6.1 The stand-in algorithm
+### 6.1 The simulated algorithm
 
 The result is the last two digits of the input (`input % 100`), shown with two digits: `03`, `23`.
 
@@ -114,7 +114,7 @@ The result is the last two digits of the input (`input % 100`), shown with two d
 
 - A result is only computed when the row's result bit is set.
 - The computation runs off the main thread on `Dispatchers.Default`, with a limit on how many run at once.
-- The mock version adds a few milliseconds of simulated CPU work, with occasional slow outliers.
+- The simulated algorithm adds a few milliseconds of CPU work, with occasional slow outliers. It runs in both flavors, because the real algorithm isn't available.
 - A computation that takes too long times out and the row shows an error.
 - Results are cached by input value, because the same input always gives the same result.
 
