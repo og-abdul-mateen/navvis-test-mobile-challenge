@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Mobile Challenge</string>
+    <string name="backend_mock">Using mock data</string>
+    <string name="backend_real">Using navvis.com</string>
 </resources>
