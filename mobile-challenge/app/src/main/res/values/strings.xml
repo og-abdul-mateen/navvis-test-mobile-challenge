@@ -2,4 +2,15 @@
     <string name="app_name">Mobile Challenge</string>
     <string name="backend_mock">Using mock data</string>
     <string name="backend_real">Using navvis.com</string>
+
+    <string name="state_loading">Loading numbers…</string>
+    <string name="state_empty">No numbers to show.</string>
+    <string name="state_error">Couldn\'t load numbers.</string>
+
+    <!-- Same format as the challenge's example, for example "result=03". -->
+    <string name="row_result">result=%1$s</string>
+    <string name="row_pending">…</string>
+    <string name="row_error_missing_input">missing input</string>
+    <string name="row_error_invalid_input">invalid input</string>
+    <string name="row_error_timed_out">timed out</string>
 </resources>
