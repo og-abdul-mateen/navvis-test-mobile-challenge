@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -69,11 +70,33 @@ fun StreamScreen(uiState: UiState, useMock: Boolean, modifier: Modifier = Modifi
             .fillMaxSize()
             .padding(innerPadding)
         when (uiState) {
-            UiState.Loading -> CenteredMessage(stringResource(R.string.state_loading), contentModifier)
+            UiState.Loading -> LoadingState(contentModifier)
             is UiState.Empty -> CenteredMessage(stringResource(R.string.state_empty), contentModifier)
             is UiState.Error -> CenteredMessage(stringResource(R.string.state_error), contentModifier)
-            is UiState.Content -> SectionList(uiState.sections, contentModifier)
+            is UiState.Content -> Box(contentModifier) {
+                SectionList(uiState.sections, Modifier.fillMaxSize())
+                // Drawn over the list instead of above it, so rows don't shift when it goes away.
+                if (uiState.isFetching) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun LoadingState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        CircularProgressIndicator()
+        Text(
+            text = stringResource(R.string.state_loading),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(top = 16.dp),
+        )
     }
 }
 
