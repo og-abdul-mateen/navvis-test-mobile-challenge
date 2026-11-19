@@ -24,9 +24,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,7 +73,14 @@ fun StreamScreen(uiState: UiState, useMock: Boolean, modifier: Modifier = Modifi
             .padding(innerPadding)
         when (uiState) {
             UiState.Loading -> LoadingState(contentModifier)
-            is UiState.Empty -> CenteredMessage(stringResource(R.string.state_empty), contentModifier)
+            is UiState.Empty -> {
+                // Nothing at all vs. only bad values: the second case tells the user data did arrive.
+                val message = when (val skipped = uiState.skippedCount) {
+                    0 -> stringResource(R.string.state_empty)
+                    else -> pluralStringResource(R.plurals.state_empty_all_skipped, skipped, skipped)
+                }
+                CenteredMessage(message, contentModifier)
+            }
             is UiState.Error -> CenteredMessage(stringResource(R.string.state_error), contentModifier)
             is UiState.Content -> Box(contentModifier) {
                 SectionList(uiState.sections, Modifier.fillMaxSize())
@@ -191,7 +200,15 @@ private fun errorText(reason: RowError): Int = when (reason) {
 @Composable
 private fun CenteredMessage(text: String, modifier: Modifier = Modifier) {
     Box(modifier = modifier.padding(16.dp), contentAlignment = Alignment.Center) {
-        Text(text, style = MaterialTheme.typography.bodyLarge)
+        Text(text, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EmptyStatePreview() {
+    MobileChallengeTheme {
+        StreamScreen(uiState = UiState.Empty(skippedCount = 12), useMock = true)
     }
 }
 
