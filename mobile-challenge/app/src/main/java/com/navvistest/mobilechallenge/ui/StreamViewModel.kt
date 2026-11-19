@@ -59,6 +59,8 @@ class StreamViewModel(
      */
     private lateinit var session: CoroutineScope
 
+    private lateinit var timer: SessionTimer
+
     /** Valid rows by stream index. */
     private val rows = HashMap<Int, NumberRow>()
 
@@ -97,6 +99,7 @@ class StreamViewModel(
     private fun startSession() {
         if (::session.isInitialized) session.cancel()
         session = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext.job))
+        timer = SessionTimer(_scenario.value?.label ?: "navvis.com")
 
         rows.clear()
         inputs.clear()
@@ -221,8 +224,17 @@ class StreamViewModel(
             val skipped = skippedCount
             val numbers = numbersStatus
             val inputsState = inputsStatus
-            _uiState.value = withContext(Dispatchers.Default) {
-                buildUiState(snapshot, skipped, numbers, inputsState)
+            val sessionTimer = timer
+            val (state, anyPending) = withContext(Dispatchers.Default) {
+                buildUiState(snapshot, skipped, numbers, inputsState) to
+                    snapshot.any { it.result == RowResult.Pending }
+            }
+            _uiState.value = state
+
+            if (state is UiState.Content) {
+                sessionTimer.mark("first rows on screen")
+                if (state.isComplete) sessionTimer.mark("both streams finished")
+                if (state.isComplete && !anyPending) sessionTimer.mark("all results computed")
             }
             delay(REBUILD_INTERVAL)
         }
