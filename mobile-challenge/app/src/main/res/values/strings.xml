@@ -9,7 +9,8 @@
 
     <!-- Same format as the challenge's example, for example "result=03". -->
     <string name="row_result">result=%1$s</string>
-    <string name="row_pending">…</string>
+    <!-- Read out by screen readers for the spinner on a row that is still waiting for its result. -->
+    <string name="row_pending">Computing result</string>
     <string name="row_error_missing_input">missing input</string>
     <string name="row_error_invalid_input">invalid input</string>
     <string name="row_error_timed_out">timed out</string>

@@ -9,8 +9,12 @@ import com.navvistest.mobilechallenge.data.RawValue
 import com.navvistest.mobilechallenge.data.StreamEvent
 import com.navvistest.mobilechallenge.data.StreamRepository
 import com.navvistest.mobilechallenge.di.AppContainer
+import com.navvistest.mobilechallenge.domain.ComputationError
+import com.navvistest.mobilechallenge.domain.ComputationResult
 import com.navvistest.mobilechallenge.domain.NumberParser
 import com.navvistest.mobilechallenge.domain.NumberRow
+import com.navvistest.mobilechallenge.domain.ResultComputer
+import com.navvistest.mobilechallenge.domain.RowError
 import com.navvistest.mobilechallenge.domain.RowResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -23,18 +27,26 @@ import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Collects both streams and turns them into [UiState].
+ * Collects both streams, pairs each number with the input at the same index, and turns
+ * everything into [UiState].
  *
- * Both collectors run on the main thread (the default for [viewModelScope]), so the stores
- * below are only touched from one thread and need no locking.
+ * Everything here runs on the main thread (the default for [viewModelScope]): the stream
+ * collectors and the code that stores finished results. So the stores below are only touched
+ * from one thread and need no locking. Only the computations themselves run elsewhere.
  */
-class StreamViewModel(private val repository: StreamRepository) : ViewModel() {
+class StreamViewModel(
+    private val repository: StreamRepository,
+    private val resultComputer: ResultComputer,
+) : ViewModel() {
 
     /** Valid rows by stream index. */
     private val rows = HashMap<Int, NumberRow>()
 
-    /** Inputs by stream index. Paired with rows. */
+    /** Inputs by stream index. */
     private val inputs = HashMap<Int, RawValue>()
+
+    /** How many inputs exist in total, once the inputs stream has finished. */
+    private var inputsTotal: Int? = null
 
     private var skippedCount = 0
     private var numbersStatus: StreamStatus = StreamStatus.Fetching
@@ -66,6 +78,7 @@ class StreamViewModel(private val repository: StreamRepository) : ViewModel() {
                 } else {
                     val result = if (number.showsResult) RowResult.Pending else RowResult.NotNeeded
                     rows[index] = NumberRow(index, number, result)
+                    if (number.showsResult) pairWithInput(index)
                 }
             }
             is StreamEvent.Finished -> numbersStatus = StreamStatus.Finished
@@ -77,12 +90,43 @@ class StreamViewModel(private val repository: StreamRepository) : ViewModel() {
     private fun onInputsEvent(event: StreamEvent) {
         when (event) {
             is StreamEvent.Chunk -> event.values.forEachIndexed { offset, raw ->
-                inputs[event.startIndex + offset] = raw
+                val index = event.startIndex + offset
+                inputs[index] = raw
+                if (rows[index]?.number?.showsResult == true) pairWithInput(index)
             }
-            is StreamEvent.Finished -> inputsStatus = StreamStatus.Finished
+            is StreamEvent.Finished -> {
+                inputsStatus = StreamStatus.Finished
+                inputsTotal = event.totalCount
+                // Rows past the last input will never get one.
+                rows.values
+                    .filter { it.index >= event.totalCount && it.result == RowResult.Pending }
+                    .forEach { rows[it.index] = it.copy(result = RowResult.Failed(RowError.MissingInput)) }
+            }
             is StreamEvent.Failed -> inputsStatus = StreamStatus.Failed(event.error)
         }
         publish()
+    }
+
+    /**
+     * Starts the computation for a row that needs a result, if its input is here.
+     *
+     * Called from both streams: whichever of the number and the input arrives second
+     * starts the work, so it runs exactly once per row.
+     */
+    private fun pairWithInput(index: Int) {
+        val input = inputs[index]
+        if (input == null) {
+            val total = inputsTotal
+            if (total != null && index >= total) {
+                rows[index] = rows.getValue(index).copy(result = RowResult.Failed(RowError.MissingInput))
+            }
+            return
+        }
+        viewModelScope.launch {
+            val result = resultComputer.compute(input.asLongOrNull())
+            rows[index] = rows.getValue(index).copy(result = result.toRowResult())
+            publish()
+        }
     }
 
     /** Asks for the screen state to be rebuilt. Only called on the main thread. */
@@ -119,10 +163,20 @@ class StreamViewModel(private val repository: StreamRepository) : ViewModel() {
         private val REBUILD_INTERVAL = 100.milliseconds
 
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
-            initializer { StreamViewModel(container.streamRepository) }
+            initializer { StreamViewModel(container.streamRepository, container.resultComputer) }
         }
     }
 }
 
 /** The domain layer works with plain numbers; anything that isn't an integer counts as missing. */
 private fun RawValue.asLongOrNull(): Long? = (this as? RawValue.Integer)?.value
+
+private fun ComputationResult.toRowResult(): RowResult = when (this) {
+    is ComputationResult.Success -> RowResult.Ready(this)
+    is ComputationResult.Failure -> RowResult.Failed(
+        when (error) {
+            ComputationError.InvalidInput -> RowError.InvalidInput
+            ComputationError.TimedOut -> RowError.TimedOut
+        },
+    )
+}

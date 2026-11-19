@@ -4,6 +4,7 @@ import com.navvistest.mobilechallenge.data.ApiConfig
 import com.navvistest.mobilechallenge.data.StreamApi
 import com.navvistest.mobilechallenge.data.StreamRepository
 import com.navvistest.mobilechallenge.data.mock.MockInterceptor
+import com.navvistest.mobilechallenge.domain.ResultComputer
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -30,4 +31,6 @@ class AppContainer(val apiConfig: ApiConfig) {
     private val streamApi = StreamApi(httpClient, apiConfig.baseUrl.toHttpUrl())
 
     val streamRepository = StreamRepository(streamApi)
+
+    val resultComputer = ResultComputer()
 }

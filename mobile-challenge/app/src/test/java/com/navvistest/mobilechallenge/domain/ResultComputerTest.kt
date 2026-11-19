@@ -1,5 +1,7 @@
 package com.navvistest.mobilechallenge.domain
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -61,5 +63,19 @@ class ResultComputerTest {
         computer.compute(23)
 
         assertEquals(2, calls.get())
+    }
+
+    @Test
+    fun `time spent waiting for a turn does not count towards the timeout`() = runBlocking {
+        // One slot, 30 ms of work each, 100 ms timeout: the last of 10 waits about 270 ms in line.
+        val computer = ResultComputer(
+            algorithm = { Thread.sleep(30); it % 100 },
+            timeout = 100.milliseconds,
+            parallelism = 1,
+        )
+
+        val results = (1L..10L).map { input -> async { computer.compute(input) } }.awaitAll()
+
+        assertTrue(results.all { it is ComputationResult.Success })
     }
 }
