@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -188,10 +189,10 @@ private fun LazyListScope.section(section: Section) {
     item(key = "section-${section.index}", contentType = "header") {
         SectionHeader(section.title)
     }
-    section.rows.forEach { row ->
-        item(key = row.index, contentType = "row") {
-            NumberRowItem(row)
-        }
+    // One items() call per section. Calling item() for every row would walk all of them on the
+    // main thread each time the list updates; items() only looks at the rows on screen.
+    items(section.rows, key = { it.index }, contentType = { "row" }) { row ->
+        NumberRowItem(row)
     }
 }
 
