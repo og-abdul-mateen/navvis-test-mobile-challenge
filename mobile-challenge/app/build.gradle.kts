@@ -40,9 +40,18 @@ android {
 
     buildTypes {
         release {
+            // R8 shrinks and optimises the code. Compose is noticeably faster with it.
             optimization {
-                enable = false
+                enable = true
             }
+        }
+        // Release settings, but signed with the debug key so it installs without a keystore.
+        // Used to measure performance: debug builds of Compose are much slower than release.
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            isDebuggable = false
         }
     }
     compileOptions {
