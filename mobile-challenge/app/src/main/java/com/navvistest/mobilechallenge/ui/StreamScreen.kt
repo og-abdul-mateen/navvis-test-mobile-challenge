@@ -44,13 +44,18 @@ import com.navvistest.mobilechallenge.ui.theme.MobileChallengeTheme
 @Composable
 fun StreamRoute(viewModel: StreamViewModel, useMock: Boolean) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    StreamScreen(uiState = uiState, useMock = useMock)
+    StreamScreen(uiState = uiState, useMock = useMock, onRetry = viewModel::retry)
 }
 
 /** Draws a [UiState]. Holds no logic, so it can be previewed with any state. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StreamScreen(uiState: UiState, useMock: Boolean, modifier: Modifier = Modifier) {
+fun StreamScreen(
+    uiState: UiState,
+    useMock: Boolean,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -81,20 +86,23 @@ fun StreamScreen(uiState: UiState, useMock: Boolean, modifier: Modifier = Modifi
                 }
                 CenteredMessage(message, contentModifier)
             }
-            is UiState.Error -> CenteredMessage(stringResource(R.string.state_error), contentModifier)
-            is UiState.Content -> Box(contentModifier) {
-                SectionList(
-                    sections = uiState.sections,
-                    footer = if (uiState.isComplete) {
-                        { SummaryFooter(uiState) }
-                    } else {
-                        null
-                    },
-                    modifier = Modifier.fillMaxSize(),
-                )
-                // Drawn over the list instead of above it, so rows don't shift when it goes away.
-                if (uiState.isFetching) {
-                    LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+            is UiState.Error -> ErrorState(uiState.error, onRetry, contentModifier)
+            is UiState.Content -> Column(contentModifier) {
+                uiState.failure?.let { StreamFailureBanner(it, onRetry) }
+                Box(Modifier.weight(1f)) {
+                    SectionList(
+                        sections = uiState.sections,
+                        footer = if (uiState.isComplete) {
+                            { SummaryFooter(uiState) }
+                        } else {
+                            null
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                    // Drawn over the list instead of above it, so rows don't shift when it goes away.
+                    if (uiState.isFetching) {
+                        LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                    }
                 }
             }
         }
@@ -242,7 +250,7 @@ private fun CenteredMessage(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun EmptyStatePreview() {
     MobileChallengeTheme {
-        StreamScreen(uiState = UiState.Empty(skippedCount = 12), useMock = true)
+        StreamScreen(uiState = UiState.Empty(skippedCount = 12), useMock = true, onRetry = {})
     }
 }
 
@@ -275,6 +283,7 @@ private fun StreamScreenPreview() {
                 failure = null,
             ),
             useMock = true,
+            onRetry = {},
         )
     }
 }
