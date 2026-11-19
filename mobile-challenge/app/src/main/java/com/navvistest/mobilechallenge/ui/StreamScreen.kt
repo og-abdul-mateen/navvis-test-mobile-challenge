@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -73,7 +75,16 @@ fun StreamScreen(uiState: UiState, useMock: Boolean, modifier: Modifier = Modifi
 
 @Composable
 private fun SectionList(sections: List<Section>, modifier: Modifier = Modifier) {
-    LazyColumn(modifier = modifier) {
+    val listState = rememberLazyListState()
+    // Keys make the list hold on to the first visible item, so rows inserted above it would
+    // push the top of the list out of view. While the user is still at the very top, it stays there.
+    // The position is read without observation so scrolling doesn't recompose this function.
+    val isAtTop = Snapshot.withoutReadObservation {
+        listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
+    }
+    if (isAtTop) listState.requestScrollToItem(0)
+
+    LazyColumn(state = listState, modifier = modifier) {
         sections.forEach { section(it) }
     }
 }

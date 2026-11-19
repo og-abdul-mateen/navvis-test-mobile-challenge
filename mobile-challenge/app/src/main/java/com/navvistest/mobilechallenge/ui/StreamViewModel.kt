@@ -12,10 +12,15 @@ import com.navvistest.mobilechallenge.di.AppContainer
 import com.navvistest.mobilechallenge.domain.NumberParser
 import com.navvistest.mobilechallenge.domain.NumberRow
 import com.navvistest.mobilechallenge.domain.RowResult
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Collects both streams and turns them into [UiState].
@@ -38,7 +43,15 @@ class StreamViewModel(private val repository: StreamRepository) : ViewModel() {
     private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
+    /**
+     * Goes up by one on every change. The number itself means nothing; a new value tells
+     * the rebuild loop that something changed. A StateFlow ignores a value equal to the
+     * current one, which is why this is a counter and not Unit.
+     */
+    private val changeCount = MutableStateFlow(0)
+
     init {
+        viewModelScope.launch { rebuildLoop() }
         viewModelScope.launch { repository.numbers().collect { onNumbersEvent(it) } }
         viewModelScope.launch { repository.inputs().collect { onInputsEvent(it) } }
     }
@@ -72,12 +85,39 @@ class StreamViewModel(private val repository: StreamRepository) : ViewModel() {
         publish()
     }
 
-    // Rebuilds the whole state on the main thread after every event.
+    /** Asks for the screen state to be rebuilt. Only called on the main thread. */
     private fun publish() {
-        _uiState.value = buildUiState(rows.values, skippedCount, numbersStatus, inputsStatus)
+        changeCount.value++
+    }
+
+    /**
+     * Rebuilds the state at most once per [REBUILD_INTERVAL]. The first change is shown at once.
+     * A StateFlow collector only sees the latest value, so all changes during the build or the
+     * wait that follows are combined into the next rebuild, and the last change is never lost.
+     *
+     * The snapshot is taken on the main thread, where the stores are written. Grouping and
+     * sorting then run on [Dispatchers.Default], so a large list never blocks the UI.
+     *
+     * This uses collect, not collectLatest: collectLatest would cancel a rebuild every time
+     * a new change arrived, so during a busy stream the screen would hardly ever update.
+     */
+    private suspend fun rebuildLoop() {
+        // drop(1) skips the starting value, which would only rebuild the initial Loading state.
+        changeCount.drop(1).collect {
+            val snapshot = rows.values.toList()
+            val skipped = skippedCount
+            val numbers = numbersStatus
+            val inputsState = inputsStatus
+            _uiState.value = withContext(Dispatchers.Default) {
+                buildUiState(snapshot, skipped, numbers, inputsState)
+            }
+            delay(REBUILD_INTERVAL)
+        }
     }
 
     companion object {
+        private val REBUILD_INTERVAL = 100.milliseconds
+
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
             initializer { StreamViewModel(container.streamRepository) }
         }
