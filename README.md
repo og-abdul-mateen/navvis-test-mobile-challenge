@@ -76,7 +76,7 @@ The challenge leaves a lot open on purpose. All my assumptions and the reasons f
 - Inside a section, rows are sorted by item, then: no result, results from low to high, pending, errors.
 - A row without the result flag never shows an error, even if its input is broken.
 
-## Errors handling
+## Error handling
 
 - One bad value in a chunk (a string, a decimal, null) only affects that row. The rest of the chunk is kept.
 - A body that isn't JSON, or doesn't have the expected key, fails that request.
