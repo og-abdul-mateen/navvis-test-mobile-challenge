@@ -64,7 +64,33 @@ class StreamViewModel(
 
     init {
         viewModelScope.launch { rebuildLoop() }
+        collectNumbers()
+        collectInputs()
+    }
+
+    /**
+     * Fetches any failed stream again. The repository remembers where each stream stopped,
+     * so this carries on from the next index and no row is fetched twice.
+     * A stream that is still fetching or already finished is left alone, so tapping
+     * Retry twice doesn't start a second collector.
+     */
+    fun retry() {
+        if (numbersStatus is StreamStatus.Failed) {
+            numbersStatus = StreamStatus.Fetching
+            collectNumbers()
+        }
+        if (inputsStatus is StreamStatus.Failed) {
+            inputsStatus = StreamStatus.Fetching
+            collectInputs()
+        }
+        publish()
+    }
+
+    private fun collectNumbers() {
         viewModelScope.launch { repository.numbers().collect { onNumbersEvent(it) } }
+    }
+
+    private fun collectInputs() {
         viewModelScope.launch { repository.inputs().collect { onInputsEvent(it) } }
     }
 
