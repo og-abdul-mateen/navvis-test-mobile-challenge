@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MobileChallengeTheme {
                 val viewModel: StreamViewModel = viewModel(factory = StreamViewModel.factory(container))
-                StreamRoute(viewModel = viewModel, useMock = container.apiConfig.useMock)
+                StreamRoute(viewModel)
             }
         }
     }

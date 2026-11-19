@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.navvistest.mobilechallenge.R
+import com.navvistest.mobilechallenge.data.mock.MockScenarioType
 import com.navvistest.mobilechallenge.domain.ComputationResult
 import com.navvistest.mobilechallenge.domain.NumberRow
 import com.navvistest.mobilechallenge.domain.ParsedNumber
@@ -42,9 +43,15 @@ import com.navvistest.mobilechallenge.domain.Section
 import com.navvistest.mobilechallenge.ui.theme.MobileChallengeTheme
 
 @Composable
-fun StreamRoute(viewModel: StreamViewModel, useMock: Boolean) {
+fun StreamRoute(viewModel: StreamViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    StreamScreen(uiState = uiState, useMock = useMock, onRetry = viewModel::retry)
+    val scenario by viewModel.scenario.collectAsStateWithLifecycle()
+    StreamScreen(
+        uiState = uiState,
+        scenario = scenario,
+        onRetry = viewModel::retry,
+        onScenarioSelected = viewModel::selectScenario,
+    )
 }
 
 /** Draws a [UiState]. Holds no logic, so it can be previewed with any state. */
@@ -52,9 +59,10 @@ fun StreamRoute(viewModel: StreamViewModel, useMock: Boolean) {
 @Composable
 fun StreamScreen(
     uiState: UiState,
-    useMock: Boolean,
+    scenario: MockScenarioType?,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    onScenarioSelected: (MockScenarioType) -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -64,11 +72,18 @@ fun StreamScreen(
                     Column {
                         Text(stringResource(R.string.app_name))
                         Text(
-                            text = stringResource(if (useMock) R.string.backend_mock else R.string.backend_real),
+                            text = if (scenario != null) {
+                                stringResource(R.string.backend_mock, scenario.label)
+                            } else {
+                                stringResource(R.string.backend_real)
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
+                },
+                actions = {
+                    if (scenario != null) ScenarioMenu(current = scenario, onSelected = onScenarioSelected)
                 },
             )
         },
@@ -250,7 +265,7 @@ private fun CenteredMessage(text: String, modifier: Modifier = Modifier) {
 @Composable
 private fun EmptyStatePreview() {
     MobileChallengeTheme {
-        StreamScreen(uiState = UiState.Empty(skippedCount = 12), useMock = true, onRetry = {})
+        StreamScreen(uiState = UiState.Empty(skippedCount = 12), scenario = MockScenarioType.Normal, onRetry = {})
     }
 }
 
@@ -282,7 +297,7 @@ private fun StreamScreenPreview() {
                 isFetching = true,
                 failure = null,
             ),
-            useMock = true,
+            scenario = MockScenarioType.Normal,
             onRetry = {},
         )
     }

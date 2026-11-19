@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Mobile Challenge</string>
-    <string name="backend_mock">Using mock data</string>
+    <!-- %1$s is the scenario name, which is only shown in the mock build. -->
+    <string name="backend_mock">Mock data: %1$s</string>
+    <string name="scenario_menu">Scenario</string>
     <string name="backend_real">Using navvis.com</string>
 
     <string name="state_loading">Loading numbers…</string>
@@ -17,6 +19,7 @@
 
     <!-- Reasons shown under an error. Plain words, no exception names. -->
     <string name="error_server">Server error (%1$d)</string>
+    <string name="error_busy">The server is busy, try again in a moment</string>
     <string name="error_request_failed">Request failed (%1$d)</string>
     <string name="error_timeout">The server took too long to answer</string>
     <string name="error_no_connection">No connection</string>
