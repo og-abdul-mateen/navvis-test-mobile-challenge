@@ -1,10 +1,12 @@
 package com.navvistest.mobilechallenge.ui
 
 import com.navvistest.mobilechallenge.data.ApiError
+import com.navvistest.mobilechallenge.domain.ComputationResult
 import com.navvistest.mobilechallenge.domain.NumberRow
 import com.navvistest.mobilechallenge.domain.ParsedNumber
 import com.navvistest.mobilechallenge.domain.RowResult
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -39,5 +41,20 @@ class UiStateTest {
         state as UiState.Content
         assertEquals(StreamFailure(StreamName.Inputs, ApiError.Http(503)), state.failure)
         assertEquals(false, state.isFetching)
+        assertFalse(state.isComplete)
+    }
+
+    @Test
+    fun `counts only rows whose result is ready`() {
+        val rows = listOf(
+            NumberRow(0, ParsedNumber(0, 0, true), RowResult.Ready(ComputationResult.Success(7))),
+            NumberRow(1, ParsedNumber(0, 0, true), RowResult.Pending),
+            NumberRow(2, ParsedNumber(0, 0, false), RowResult.NotNeeded),
+        )
+
+        val state = buildUiState(rows, 0, finished, finished) as UiState.Content
+
+        assertEquals(1, state.resultCount)
+        assertTrue(state.isComplete)
     }
 }

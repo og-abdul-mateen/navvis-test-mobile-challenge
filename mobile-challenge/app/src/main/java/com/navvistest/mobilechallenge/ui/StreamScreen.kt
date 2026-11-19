@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,9 +24,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,16 +72,57 @@ fun StreamScreen(uiState: UiState, useMock: Boolean, modifier: Modifier = Modifi
             .fillMaxSize()
             .padding(innerPadding)
         when (uiState) {
-            UiState.Loading -> CenteredMessage(stringResource(R.string.state_loading), contentModifier)
-            is UiState.Empty -> CenteredMessage(stringResource(R.string.state_empty), contentModifier)
+            UiState.Loading -> LoadingState(contentModifier)
+            is UiState.Empty -> {
+                // Nothing at all vs. only bad values: the second case tells the user data did arrive.
+                val message = when (val skipped = uiState.skippedCount) {
+                    0 -> stringResource(R.string.state_empty)
+                    else -> pluralStringResource(R.plurals.state_empty_all_skipped, skipped, skipped)
+                }
+                CenteredMessage(message, contentModifier)
+            }
             is UiState.Error -> CenteredMessage(stringResource(R.string.state_error), contentModifier)
-            is UiState.Content -> SectionList(uiState.sections, contentModifier)
+            is UiState.Content -> Box(contentModifier) {
+                SectionList(
+                    sections = uiState.sections,
+                    footer = if (uiState.isComplete) {
+                        { SummaryFooter(uiState) }
+                    } else {
+                        null
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                // Drawn over the list instead of above it, so rows don't shift when it goes away.
+                if (uiState.isFetching) {
+                    LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun SectionList(sections: List<Section>, modifier: Modifier = Modifier) {
+private fun LoadingState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        CircularProgressIndicator()
+        Text(
+            text = stringResource(R.string.state_loading),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+    }
+}
+
+@Composable
+private fun SectionList(
+    sections: List<Section>,
+    footer: (@Composable () -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
     val listState = rememberLazyListState()
     // Keys make the list hold on to the first visible item, so rows inserted above it would
     // push the top of the list out of view. While the user is still at the very top, it stays there.
@@ -90,7 +134,29 @@ private fun SectionList(sections: List<Section>, modifier: Modifier = Modifier) 
 
     LazyColumn(state = listState, modifier = modifier) {
         sections.forEach { section(it) }
+        if (footer != null) {
+            item(key = "footer", contentType = "footer") { footer() }
+        }
     }
+}
+
+/** Summary shown under the list once both streams are finished, for example "200 numbers shown, 3 skipped, 97 results". */
+@Composable
+private fun SummaryFooter(state: UiState.Content) {
+    val parts = listOf(
+        pluralStringResource(R.plurals.summary_numbers_shown, state.rowCount, state.rowCount),
+        stringResource(R.string.summary_skipped, state.skippedCount),
+        pluralStringResource(R.plurals.summary_results, state.resultCount, state.resultCount),
+    )
+    Text(
+        text = parts.joinToString(separator = ", "),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 24.dp),
+    )
 }
 
 private fun LazyListScope.section(section: Section) {
@@ -168,7 +234,15 @@ private fun errorText(reason: RowError): Int = when (reason) {
 @Composable
 private fun CenteredMessage(text: String, modifier: Modifier = Modifier) {
     Box(modifier = modifier.padding(16.dp), contentAlignment = Alignment.Center) {
-        Text(text, style = MaterialTheme.typography.bodyLarge)
+        Text(text, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EmptyStatePreview() {
+    MobileChallengeTheme {
+        StreamScreen(uiState = UiState.Empty(skippedCount = 12), useMock = true)
     }
 }
 
@@ -192,7 +266,14 @@ private fun StreamScreenPreview() {
     )
     MobileChallengeTheme {
         StreamScreen(
-            uiState = UiState.Content(sections, rowCount = 4, skippedCount = 0, isFetching = true, failure = null),
+            uiState = UiState.Content(
+                sections,
+                rowCount = 4,
+                skippedCount = 0,
+                resultCount = 1,
+                isFetching = true,
+                failure = null,
+            ),
             useMock = true,
         )
     }

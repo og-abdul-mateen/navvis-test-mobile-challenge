@@ -2,6 +2,7 @@ package com.navvistest.mobilechallenge.ui
 
 import com.navvistest.mobilechallenge.data.ApiError
 import com.navvistest.mobilechallenge.domain.NumberRow
+import com.navvistest.mobilechallenge.domain.RowResult
 import com.navvistest.mobilechallenge.domain.Section
 import com.navvistest.mobilechallenge.domain.SectionListBuilder
 
@@ -19,6 +20,7 @@ sealed interface UiState {
     /**
      * At least one row to show.
      *
+     * @property resultCount rows whose result has been computed.
      * @property isFetching true while either stream is still fetching.
      * @property failure set when a stream failed after rows were already shown.
      */
@@ -26,9 +28,13 @@ sealed interface UiState {
         val sections: List<Section>,
         val rowCount: Int,
         val skippedCount: Int,
+        val resultCount: Int,
         val isFetching: Boolean,
         val failure: StreamFailure?,
-    ) : UiState
+    ) : UiState {
+        /** Both streams finished without an error. Results may still be computing. */
+        val isComplete: Boolean get() = !isFetching && failure == null
+    }
 
     /** The numbers stream failed before any row arrived. */
     data class Error(val error: ApiError) : UiState
@@ -70,6 +76,7 @@ fun buildUiState(
         sections = SectionListBuilder.build(rows),
         rowCount = rows.size,
         skippedCount = skippedCount,
+        resultCount = rows.count { it.result is RowResult.Ready },
         isFetching = numbersStatus == StreamStatus.Fetching || inputsStatus == StreamStatus.Fetching,
         failure = failure,
     )

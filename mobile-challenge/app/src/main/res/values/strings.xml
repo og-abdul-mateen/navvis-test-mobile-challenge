@@ -4,8 +4,24 @@
     <string name="backend_real">Using navvis.com</string>
 
     <string name="state_loading">Loading numbers…</string>
-    <string name="state_empty">No numbers to show.</string>
+    <string name="state_empty">No numbers available.</string>
+    <!-- Shown when numbers arrived but none of them could be shown. -->
+    <plurals name="state_empty_all_skipped">
+        <item quantity="one">No valid numbers. %d value was skipped.</item>
+        <item quantity="other">No valid numbers. %d values were skipped.</item>
+    </plurals>
     <string name="state_error">Couldn\'t load numbers.</string>
+
+    <!-- Footer pieces, joined with commas: "200 numbers shown, 3 skipped, 97 results". -->
+    <plurals name="summary_numbers_shown">
+        <item quantity="one">%d number shown</item>
+        <item quantity="other">%d numbers shown</item>
+    </plurals>
+    <string name="summary_skipped">%d skipped</string>
+    <plurals name="summary_results">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
 
     <!-- Same format as the challenge's example, for example "result=03". -->
     <string name="row_result">result=%1$s</string>
