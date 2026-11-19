@@ -12,6 +12,17 @@
     </plurals>
     <string name="state_error">Couldn\'t load numbers.</string>
 
+    <!-- Footer pieces, joined with commas: "200 numbers shown, 3 skipped, 97 results". -->
+    <plurals name="summary_numbers_shown">
+        <item quantity="one">%d number shown</item>
+        <item quantity="other">%d numbers shown</item>
+    </plurals>
+    <string name="summary_skipped">%d skipped</string>
+    <plurals name="summary_results">
+        <item quantity="one">%d result</item>
+        <item quantity="other">%d results</item>
+    </plurals>
+
     <!-- Same format as the challenge's example, for example "result=03". -->
     <string name="row_result">result=%1$s</string>
     <!-- Read out by screen readers for the spinner on a row that is still waiting for its result. -->

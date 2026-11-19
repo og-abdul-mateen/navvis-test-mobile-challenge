@@ -83,7 +83,15 @@ fun StreamScreen(uiState: UiState, useMock: Boolean, modifier: Modifier = Modifi
             }
             is UiState.Error -> CenteredMessage(stringResource(R.string.state_error), contentModifier)
             is UiState.Content -> Box(contentModifier) {
-                SectionList(uiState.sections, Modifier.fillMaxSize())
+                SectionList(
+                    sections = uiState.sections,
+                    footer = if (uiState.isComplete) {
+                        { SummaryFooter(uiState) }
+                    } else {
+                        null
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
                 // Drawn over the list instead of above it, so rows don't shift when it goes away.
                 if (uiState.isFetching) {
                     LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
@@ -110,7 +118,11 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SectionList(sections: List<Section>, modifier: Modifier = Modifier) {
+private fun SectionList(
+    sections: List<Section>,
+    footer: (@Composable () -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
     val listState = rememberLazyListState()
     // Keys make the list hold on to the first visible item, so rows inserted above it would
     // push the top of the list out of view. While the user is still at the very top, it stays there.
@@ -122,7 +134,29 @@ private fun SectionList(sections: List<Section>, modifier: Modifier = Modifier) 
 
     LazyColumn(state = listState, modifier = modifier) {
         sections.forEach { section(it) }
+        if (footer != null) {
+            item(key = "footer", contentType = "footer") { footer() }
+        }
     }
+}
+
+/** Summary shown under the list once both streams are finished, for example "200 numbers shown, 3 skipped, 97 results". */
+@Composable
+private fun SummaryFooter(state: UiState.Content) {
+    val parts = listOf(
+        pluralStringResource(R.plurals.summary_numbers_shown, state.rowCount, state.rowCount),
+        stringResource(R.string.summary_skipped, state.skippedCount),
+        pluralStringResource(R.plurals.summary_results, state.resultCount, state.resultCount),
+    )
+    Text(
+        text = parts.joinToString(separator = ", "),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 24.dp),
+    )
 }
 
 private fun LazyListScope.section(section: Section) {
@@ -232,7 +266,14 @@ private fun StreamScreenPreview() {
     )
     MobileChallengeTheme {
         StreamScreen(
-            uiState = UiState.Content(sections, rowCount = 4, skippedCount = 0, isFetching = true, failure = null),
+            uiState = UiState.Content(
+                sections,
+                rowCount = 4,
+                skippedCount = 0,
+                resultCount = 1,
+                isFetching = true,
+                failure = null,
+            ),
             useMock = true,
         )
     }
