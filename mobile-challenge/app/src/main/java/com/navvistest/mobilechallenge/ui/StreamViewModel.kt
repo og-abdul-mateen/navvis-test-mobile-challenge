@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.navvistest.mobilechallenge.data.RawValue
 import com.navvistest.mobilechallenge.data.StreamEvent
 import com.navvistest.mobilechallenge.data.StreamRepository
+import com.navvistest.mobilechallenge.data.mock.MockScenarioType
 import com.navvistest.mobilechallenge.di.AppContainer
 import com.navvistest.mobilechallenge.domain.ComputationError
 import com.navvistest.mobilechallenge.domain.ComputationResult
@@ -16,15 +17,19 @@ import com.navvistest.mobilechallenge.domain.NumberRow
 import com.navvistest.mobilechallenge.domain.ResultComputer
 import com.navvistest.mobilechallenge.domain.RowError
 import com.navvistest.mobilechallenge.domain.RowResult
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Collects both streams, pairs each number with the input at the same index, and turns
@@ -35,9 +40,24 @@ import kotlin.time.Duration.Companion.milliseconds
  * from one thread and need no locking. Only the computations themselves run elsewhere.
  */
 class StreamViewModel(
-    private val repository: StreamRepository,
+    private val openRepository: (MockScenarioType?) -> StreamRepository,
     private val resultComputer: ResultComputer,
+    initialScenario: MockScenarioType?,
 ) : ViewModel() {
+
+    private val _scenario = MutableStateFlow(initialScenario)
+
+    /** The mock scenario in use. It is always null in the real build. */
+    val scenario: StateFlow<MockScenarioType?> = _scenario.asStateFlow()
+
+    private lateinit var repository: StreamRepository
+
+    /**
+     * Everything that belongs to one run of the streams: both collectors and every
+     * computation. Cancelling it stops the run, so that the new scenario can
+     * start from a clean slate.
+     */
+    private lateinit var session: CoroutineScope
 
     /** Valid rows by stream index. */
     private val rows = HashMap<Int, NumberRow>()
@@ -64,8 +84,31 @@ class StreamViewModel(
 
     init {
         viewModelScope.launch { rebuildLoop() }
+        startSession()
+    }
+
+    /** Throws away the current run and starts again with [scenario]. It's only used in the mock build. */
+    fun selectScenario(scenario: MockScenarioType) {
+        if (_scenario.value == null) return
+        _scenario.value = scenario
+        startSession()
+    }
+
+    private fun startSession() {
+        if (::session.isInitialized) session.cancel()
+        session = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext.job))
+
+        rows.clear()
+        inputs.clear()
+        inputsTotal = null
+        skippedCount = 0
+        numbersStatus = StreamStatus.Fetching
+        inputsStatus = StreamStatus.Fetching
+
+        repository = openRepository(_scenario.value)
         collectNumbers()
         collectInputs()
+        publish()
     }
 
     /**
@@ -87,11 +130,11 @@ class StreamViewModel(
     }
 
     private fun collectNumbers() {
-        viewModelScope.launch { repository.numbers().collect { onNumbersEvent(it) } }
+        session.launch { repository.numbers().collect { onNumbersEvent(it) } }
     }
 
     private fun collectInputs() {
-        viewModelScope.launch { repository.inputs().collect { onInputsEvent(it) } }
+        session.launch { repository.inputs().collect { onInputsEvent(it) } }
     }
 
     private fun onNumbersEvent(event: StreamEvent) {
@@ -148,7 +191,7 @@ class StreamViewModel(
             }
             return
         }
-        viewModelScope.launch {
+        session.launch {
             val result = resultComputer.compute(input.asLongOrNull())
             rows[index] = rows.getValue(index).copy(result = result.toRowResult())
             publish()
@@ -189,7 +232,9 @@ class StreamViewModel(
         private val REBUILD_INTERVAL = 100.milliseconds
 
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
-            initializer { StreamViewModel(container.streamRepository, container.resultComputer) }
+            initializer {
+                StreamViewModel(container::streamRepository, container.resultComputer, container.defaultScenario)
+            }
         }
     }
 }

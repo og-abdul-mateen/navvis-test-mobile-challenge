@@ -9,6 +9,7 @@ import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import java.io.IOException
+import java.net.SocketTimeoutException
 import kotlin.random.Random
 
 /**
@@ -21,7 +22,7 @@ import kotlin.random.Random
  * [random] is used from several OkHttp threads, so it must be thread-safe. [Random.Default] is.
  */
 class MockInterceptor(
-    private val scenario: MockScenario = MockScenario.happyPath(),
+    private val scenario: MockScenario,
     private val random: Random = Random.Default,
 ) : Interceptor {
 
@@ -40,6 +41,18 @@ class MockInterceptor(
         if (delay > 0) Thread.sleep(delay)
         if (chain.call().isCanceled()) throw IOException("Canceled")
 
+        // Failures happen before a chunk is taken, so a failed request never loses data.
+        if (random.nextDouble() < scenario.networkErrorChance) {
+            throw if (random.nextBoolean()) SocketTimeoutException("timeout") else IOException("Connection reset")
+        }
+        if (random.nextDouble() < scenario.serverErrorChance) {
+            return when (random.nextInt(3)) {
+                0 -> chain.respond(code = 503, body = "")
+                1 -> chain.respond(code = 429, body = "")
+                else -> chain.respond(code = 200, body = "<html>Service temporarily unavailable</html>")
+            }
+        }
+
         val chunk = endpoint.nextChunk(maxSize = scenario.maxChunkSize)
         val body = JsonObject(mapOf(endpoint.key to JsonArray(chunk)))
         return chain.respond(code = 200, body = body.toString())
@@ -49,7 +62,7 @@ class MockInterceptor(
         .request(request())
         .protocol(Protocol.HTTP_1_1)
         .code(code)
-        .message(if (code == 200) "OK" else "Not Found")
+        .message(if (code == 200) "OK" else "Error")
         .body(body.toResponseBody(JSON))
         .build()
 

@@ -68,10 +68,10 @@ fun StreamFailureBanner(failure: StreamFailure, onRetry: () -> Unit, modifier: M
 /** Plain textual description for the users. */
 @Composable
 private fun ApiError.describe(): String = when (this) {
-    is ApiError.Http -> if (code in 500..599) {
-        stringResource(R.string.error_server, code)
-    } else {
-        stringResource(R.string.error_request_failed, code)
+    is ApiError.Http -> when (code) {
+        in 500..599 -> stringResource(R.string.error_server, code)
+        429 -> stringResource(R.string.error_busy)
+        else -> stringResource(R.string.error_request_failed, code)
     }
     ApiError.Timeout -> stringResource(R.string.error_timeout)
     is ApiError.Network -> stringResource(R.string.error_no_connection)
