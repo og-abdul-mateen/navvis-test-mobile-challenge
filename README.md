@@ -115,6 +115,8 @@ The challenge leaves a lot open on purpose. All my assumptions and the reasons f
 
 There are no UI tests. The screens were checked by hand on an emulator and a phone, and the screenshots above are from those runs.
 
+GitHub Actions runs the unit tests and lint on every pull request and every push to `develop` and `main`, through the same Fastlane lanes ([.github/workflows/ci.yml](.github/workflows/ci.yml)). If a run fails, the test and lint reports are attached to it.
+
 ## Performance
 
 Full numbers and method are in [performance.md](ai-knowledge-base/performance.md). TLDR is that, from the "100,000 numbers" scenario on a Sony Xperia 1 IV (with a 120 Hz screen), using the `mockBenchmark` build and flinging the list while it streams:
@@ -140,6 +142,7 @@ Things that I kept simple, and what I'd do with more time:
 - The whole list is re-sorted every 100 ms while data arrives. It's fast enough for 100,000 rows, but inserting new rows into already sorted sections would scale better.
 - Two rows with the same input that start at the same moment both run the computation. The cache only helps once one finishes. Caching the in-progress job would fix it.
 - The scenario names in the debug menu aren't translated. They only exist in the mock build.
+- CI only runs tests and lint. Next I'd have it build both flavors on every merge to `develop` and upload the APKs, and attach signed release APKs to a GitHub release on `main`. Signing needs a release keystore stored as a CI secret.
 - The colours and fonts follow the NavVis website, but the site has no dark theme or mobile styles, so those values are my own choices (see [brand_guidelines.html](ai-knowledge-base/brand_guidelines.html)). A designer from NavVis would need to sign them off.
 
 ## How I used AI

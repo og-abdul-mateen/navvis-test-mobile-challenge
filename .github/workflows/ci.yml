@@ -1,0 +1,63 @@
+# Runs the unit tests and lint on every pull request and on every push to develop and main.
+# It uses the same Fastlane lanes as a local machine, so CI and local runs can't drift apart.
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+# A new push to the same branch cancels the run that's still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mobile-challenge
+    env:
+      # Fastlane warns without a UTF-8 locale.
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Gradle daemon is pinned to JDK 25 (gradle/gradle-daemon-jvm.properties).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      # Caches Gradle downloads and build outputs between runs.
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: mobile-challenge
+
+      - name: Unit tests
+        run: bundle exec fastlane test
+
+      - name: Lint
+        run: bundle exec fastlane lint
+
+      # Keep the reports when something fails, so the failure can be read without rerunning.
+      - name: Upload test and lint reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            mobile-challenge/app/build/reports/
+            mobile-challenge/app/build/test-results/
