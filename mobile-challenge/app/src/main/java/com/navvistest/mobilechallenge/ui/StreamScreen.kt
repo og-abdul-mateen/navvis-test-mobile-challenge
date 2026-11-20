@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.navvistest.mobilechallenge.R
+import com.navvistest.mobilechallenge.data.RawValue
 import com.navvistest.mobilechallenge.data.mock.MockScenarioType
 import com.navvistest.mobilechallenge.domain.ComputationResult
 import com.navvistest.mobilechallenge.domain.NumberRow
@@ -48,11 +49,14 @@ import com.navvistest.mobilechallenge.ui.theme.NavVisBlue
 fun StreamRoute(viewModel: StreamViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scenario by viewModel.scenario.collectAsStateWithLifecycle()
+    val showRawValues by viewModel.showRawValues.collectAsStateWithLifecycle()
     StreamScreen(
         uiState = uiState,
         scenario = scenario,
         onRetry = viewModel::retry,
         onScenarioSelected = viewModel::selectScenario,
+        showRawValues = showRawValues,
+        onToggleRawValues = viewModel::toggleRawValues,
     )
 }
 
@@ -65,6 +69,8 @@ fun StreamScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     onScenarioSelected: (MockScenarioType) -> Unit = {},
+    showRawValues: Boolean = false,
+    onToggleRawValues: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -85,7 +91,14 @@ fun StreamScreen(
                     }
                 },
                 actions = {
-                    if (scenario != null) ScenarioMenu(current = scenario, onSelected = onScenarioSelected)
+                    if (scenario != null) {
+                        ScenarioMenu(
+                            current = scenario,
+                            onSelected = onScenarioSelected,
+                            showRawValues = showRawValues,
+                            onToggleRawValues = onToggleRawValues,
+                        )
+                    }
                 },
             )
         },
@@ -109,6 +122,7 @@ fun StreamScreen(
                 Box(Modifier.weight(1f)) {
                     SectionList(
                         sections = uiState.sections,
+                        rawInputs = uiState.rawInputs,
                         footer = if (uiState.isComplete) {
                             { SummaryFooter(uiState) }
                         } else {
@@ -149,6 +163,7 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 @Composable
 private fun SectionList(
     sections: List<Section>,
+    rawInputs: Map<Int, RawValue>?,
     footer: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -162,7 +177,7 @@ private fun SectionList(
     if (isAtTop) listState.requestScrollToItem(0)
 
     LazyColumn(state = listState, modifier = modifier) {
-        sections.forEach { section(it) }
+        sections.forEach { section(it, rawInputs) }
         if (footer != null) {
             item(key = "footer", contentType = "footer") { footer() }
         }
@@ -188,7 +203,8 @@ private fun SummaryFooter(state: UiState.Content) {
     )
 }
 
-private fun LazyListScope.section(section: Section) {
+/** [rawInputs] is null unless "Show raw values" is on. */
+private fun LazyListScope.section(section: Section, rawInputs: Map<Int, RawValue>?) {
     // Keys keep each item's identity when rows move as results arrive.
     // Headers and rows use different key types, so they can't clash.
     item(key = "section-${section.index}", contentType = "header") {
@@ -197,7 +213,8 @@ private fun LazyListScope.section(section: Section) {
     // One items() call per section. Calling item() for every row would walk all of them on the
     // main thread each time the list updates; items() only looks at the rows on screen.
     items(section.rows, key = { it.index }, contentType = { "row" }) { row ->
-        NumberRowItem(row)
+        val rawText = rawInputs?.let { rawValuesText(row, it[row.index]) }
+        NumberRowItem(row, rawText)
     }
 }
 
@@ -215,7 +232,7 @@ private fun SectionHeader(title: String) {
 }
 
 @Composable
-private fun NumberRowItem(row: NumberRow) {
+private fun NumberRowItem(row: NumberRow, rawText: String?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,7 +240,16 @@ private fun NumberRowItem(row: NumberRow) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(row.number.itemTitle, style = MaterialTheme.typography.bodyLarge)
+        Column {
+            Text(row.number.itemTitle, style = MaterialTheme.typography.bodyLarge)
+            if (rawText != null) {
+                Text(
+                    text = rawText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         RowResultText(row.result)
     }
     HorizontalDivider()
