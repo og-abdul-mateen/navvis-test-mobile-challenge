@@ -8,3 +8,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# fastlane
+/fastlane/report.xml
+/fastlane/test_output
+/vendor/bundle
+/.bundle

@@ -1,0 +1,43 @@
+# Lanes for building and checking the app. Each one only runs Gradle tasks, so everything
+# here can also be done with ./gradlew directly. CI calls these lanes so it runs the same
+# steps as a local machine.
+
+# Don't send usage data to the fastlane team.
+opt_out_usage
+
+default_platform(:android)
+
+platform :android do
+  desc "Run the unit tests for both flavors"
+  lane :test do
+    gradle(tasks: ["testMockDebugUnitTest", "testRealDebugUnitTest"])
+  end
+
+  desc "Run Android lint for both flavors. Reports end up in app/build/reports"
+  lane :lint do
+    gradle(tasks: ["lintMockDebug", "lintRealDebug"])
+  end
+
+  desc "Build the mock flavor: an installable debug APK and an unsigned release APK"
+  lane :build_mock do
+    build_flavor(flavor: "Mock")
+  end
+
+  desc "Build the real flavor: an installable debug APK and an unsigned release APK"
+  lane :build_real do
+    build_flavor(flavor: "Real")
+  end
+
+  # The release APK is unsigned because the project has no release keystore yet.
+  private_lane :build_flavor do |options|
+    flavor = options[:flavor]
+    gradle(tasks: ["assemble#{flavor}Debug", "assemble#{flavor}Release"])
+
+    # The output list holds every APK in the build folder, including older ones from
+    # other lanes, so only print the two this lane built.
+    built = lane_context[SharedValues::GRADLE_ALL_APK_OUTPUT_PATHS].select do |apk|
+      apk.include?("/#{flavor.downcase}/debug/") || apk.include?("/#{flavor.downcase}/release/")
+    end
+    built.each { |apk| UI.success("Built #{apk}") }
+  end
+end

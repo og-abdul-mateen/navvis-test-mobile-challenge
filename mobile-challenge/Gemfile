@@ -1,0 +1,4 @@
+source "https://rubygems.org"
+
+# 2.220 is the oldest version these lanes were run with. Major version 3 may change the DSL.
+gem "fastlane", ">= 2.220", "< 3"

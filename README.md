@@ -54,6 +54,19 @@ In the mock build, the Scenario button in the top bar switches between ten sets 
 | Slow server | 1.5 to 2.5 s per response, to see the loading states |
 | 100,000 numbers | The performance test |
 
+### Fastlane (optional)
+
+You don't need Fastlane to build or run the app. The lanes in `mobile-challenge/fastlane/Fastfile` only call the Gradle tasks above, and CI uses them so it runs the same steps as a local machine. From `mobile-challenge`:
+
+| Lane | What it does |
+|---|---|
+| `fastlane test` | Unit tests for both flavors |
+| `fastlane lint` | Android lint for both flavors, reports in `app/build/reports` |
+| `fastlane build_mock` | Debug APK and unsigned release APK for the mock flavor |
+| `fastlane build_real` | The same for the real flavor |
+
+Use `bundle install` and `bundle exec fastlane <lane>` if you want the version range from the `Gemfile`. The release APKs are unsigned because there's no release keystore yet.
+
 ## How it works
 
 The app is one module with three layers.
