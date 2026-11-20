@@ -54,6 +54,8 @@ In the mock build, the Scenario button in the top bar switches between ten sets 
 | Slow server | 1.5 to 2.5 s per response, to see the loading states |
 | 100,000 numbers | The performance test |
 
+To check rows by hand, turn on "Show raw values" at the bottom of the same menu. Each row then shows the number it came from, its bits split as result bit, item and section, and the input it was paired with. For example `150 · 1 00101 10 · input 25` means result bit 1, item 5 (Item 6), section 2 (SECTION 3), and a result of `25`. The setting stays on when you switch scenarios.
+
 ### Fastlane (optional)
 
 You don't need Fastlane to build or run the app. The lanes in `mobile-challenge/fastlane/Fastfile` only call the Gradle tasks above, and CI uses them so it runs the same steps as a local machine. From `mobile-challenge`:
