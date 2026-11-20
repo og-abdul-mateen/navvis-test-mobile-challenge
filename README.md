@@ -127,7 +127,7 @@ Things that I kept simple, and what I'd do with more time:
 - The whole list is re-sorted every 100 ms while data arrives. It's fast enough for 100,000 rows, but inserting new rows into already sorted sections would scale better.
 - Two rows with the same input that start at the same moment both run the computation. The cache only helps once one finishes. Caching the in-progress job would fix it.
 - The scenario names in the debug menu aren't translated. They only exist in the mock build.
-- The theme is still the default Material one. I would probably make the design more appealing, and following NavVis theme.
+- The colours and fonts follow the NavVis website, but the site has no dark theme or mobile styles, so those values are my own choices (see [brand_guidelines.html](ai-knowledge-base/brand_guidelines.html)). A designer from NavVis would need to sign them off.
 
 ## How I used AI
 
