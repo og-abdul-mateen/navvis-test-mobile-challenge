@@ -84,6 +84,11 @@ class StreamViewModel(
      */
     private val changeCount = MutableStateFlow(0)
 
+    private val _showRawValues = MutableStateFlow(false)
+
+    /** Mock build only: show each row's number, bits and input under it. Kept across scenarios. */
+    val showRawValues: StateFlow<Boolean> = _showRawValues.asStateFlow()
+
     init {
         viewModelScope.launch { rebuildLoop() }
         startSession()
@@ -94,6 +99,11 @@ class StreamViewModel(
         if (_scenario.value == null) return
         _scenario.value = scenario
         startSession()
+    }
+
+    fun toggleRawValues() {
+        _showRawValues.value = !_showRawValues.value
+        publish()
     }
 
     private fun startSession() {
@@ -225,8 +235,10 @@ class StreamViewModel(
             val numbers = numbersStatus
             val inputsState = inputsStatus
             val sessionTimer = timer
+            // Copied only while the toggle is on, so the normal screen pays nothing for it.
+            val rawInputs = if (_showRawValues.value) HashMap(inputs) else null
             val (state, anyPending) = withContext(Dispatchers.Default) {
-                buildUiState(snapshot, skipped, numbers, inputsState) to
+                buildUiState(snapshot, skipped, numbers, inputsState, rawInputs) to
                     snapshot.any { it.result == RowResult.Pending }
             }
             _uiState.value = state

@@ -1,6 +1,7 @@
 package com.navvistest.mobilechallenge.ui
 
 import com.navvistest.mobilechallenge.data.ApiError
+import com.navvistest.mobilechallenge.data.RawValue
 import com.navvistest.mobilechallenge.domain.NumberRow
 import com.navvistest.mobilechallenge.domain.RowResult
 import com.navvistest.mobilechallenge.domain.Section
@@ -23,6 +24,7 @@ sealed interface UiState {
      * @property resultCount rows whose result has been computed.
      * @property isFetching true while either stream is still fetching.
      * @property failure set when a stream failed after rows were already shown.
+     * @property rawInputs inputs by stream index, only while "Show raw values" is on.
      */
     data class Content(
         val sections: List<Section>,
@@ -31,6 +33,7 @@ sealed interface UiState {
         val resultCount: Int,
         val isFetching: Boolean,
         val failure: StreamFailure?,
+        val rawInputs: Map<Int, RawValue>? = null,
     ) : UiState {
         /** Both streams finished without an error. Results may still be computing. */
         val isComplete: Boolean get() = !isFetching && failure == null
@@ -59,6 +62,7 @@ fun buildUiState(
     skippedCount: Int,
     numbersStatus: StreamStatus,
     inputsStatus: StreamStatus,
+    rawInputs: Map<Int, RawValue>? = null,
 ): UiState {
     if (rows.isEmpty()) {
         return when (numbersStatus) {
@@ -79,5 +83,6 @@ fun buildUiState(
         resultCount = rows.count { it.result is RowResult.Ready },
         isFetching = numbersStatus == StreamStatus.Fetching || inputsStatus == StreamStatus.Fetching,
         failure = failure,
+        rawInputs = rawInputs,
     )
 }
