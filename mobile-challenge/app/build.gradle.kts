@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -17,13 +18,40 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "BASE_URL", "\"https://navvis.com/\"")
+    }
+
+    // "mock" serves fake responses from inside OkHttp, "real" calls navvis.com.
+    // Both use the same base URL so the request code is identical.
+    flavorDimensions += "backend"
+    productFlavors {
+        create("mock") {
+            dimension = "backend"
+            applicationIdSuffix = ".mock"
+            versionNameSuffix = "-mock"
+            buildConfigField("boolean", "USE_MOCK", "true")
+        }
+        create("real") {
+            dimension = "backend"
+            buildConfigField("boolean", "USE_MOCK", "false")
+        }
     }
 
     buildTypes {
         release {
+            // R8 shrinks and optimises the code. Compose is noticeably faster with it.
             optimization {
-                enable = false
+                enable = true
             }
+        }
+        // Release settings, but signed with the debug key so it installs without a keystore.
+        // Used to measure performance: debug builds of Compose are much slower than release.
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            isDebuggable = false
         }
     }
     compileOptions {
@@ -32,6 +60,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -44,7 +73,13 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
