@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import com.navvistest.mobilechallenge.R
 import com.navvistest.mobilechallenge.data.mock.MockScenarioType
@@ -20,7 +21,7 @@ import com.navvistest.mobilechallenge.data.mock.MockScenarioType
 fun ScenarioMenu(current: MockScenarioType, onSelected: (MockScenarioType) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        TextButton(onClick = { expanded = true }) {
+        TextButton(onClick = { expanded = true }, shape = RectangleShape) {
             Text(stringResource(R.string.scenario_menu))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {

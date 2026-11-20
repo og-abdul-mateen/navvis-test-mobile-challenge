@@ -42,6 +42,7 @@ import com.navvistest.mobilechallenge.domain.RowError
 import com.navvistest.mobilechallenge.domain.RowResult
 import com.navvistest.mobilechallenge.domain.Section
 import com.navvistest.mobilechallenge.ui.theme.MobileChallengeTheme
+import com.navvistest.mobilechallenge.ui.theme.NavVisBlue
 
 @Composable
 fun StreamRoute(viewModel: StreamViewModel) {
@@ -117,7 +118,11 @@ fun StreamScreen(
                     )
                     // Drawn over the list instead of above it, so rows don't shift when it goes away.
                     if (uiState.isFetching) {
-                        LinearProgressIndicator(Modifier.fillMaxWidth().align(Alignment.TopCenter))
+                        LinearProgressIndicator(
+                            color = NavVisBlue,
+                            trackColor = MaterialTheme.colorScheme.outline,
+                            modifier = Modifier.fillMaxWidth().align(Alignment.TopCenter),
+                        )
                     }
                 }
             }

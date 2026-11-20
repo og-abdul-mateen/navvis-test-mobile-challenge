@@ -13,6 +13,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,7 +38,7 @@ fun ErrorState(error: ApiError, onRetry: () -> Unit, modifier: Modifier = Modifi
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
         )
-        Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
+        Button(onClick = onRetry, shape = RectangleShape) { Text(stringResource(R.string.retry)) }
     }
 }
 
@@ -60,7 +61,7 @@ fun StreamFailureBanner(failure: StreamFailure, onRetry: () -> Unit, modifier: M
                 Text(title, style = MaterialTheme.typography.bodyMedium)
                 Text(failure.error.describe(), style = MaterialTheme.typography.bodySmall)
             }
-            TextButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
+            TextButton(onClick = onRetry, shape = RectangleShape) { Text(stringResource(R.string.retry)) }
         }
     }
 }
