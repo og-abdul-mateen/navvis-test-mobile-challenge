@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brand guidelines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page-bg: #f4f6fa;
+    --page-text: #0e1116;
+    --muted: #5a6270;
+    --rule: #dde1e7;
+    --code-bg: #e9edf3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #0b0d10;
+      --page-text: #f4f6fa;
+      --muted: #a3acb8;
+      --rule: #2a3038;
+      --code-bg: #1a1f26;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #0b0d10;
+    --page-text: #f4f6fa;
+    --muted: #a3acb8;
+    --rule: #2a3038;
+    --code-bg: #1a1f26;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--page-text);
+    font: 16px/1.6 "Open Sans", Arial, sans-serif;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1, h2, h3 { font-family: "Poppins", Arial, sans-serif; line-height: 1.25; }
+  h1 { font-size: 1.9rem; font-weight: 700; margin: 0 0 8px; }
+  h2 { font-size: 1.25rem; font-weight: 700; margin: 44px 0 12px; }
+  h3 { font-size: 1rem; font-weight: 500; margin: 24px 0 8px; }
+  p { margin: 0 0 12px; }
+  .lede { color: var(--muted); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  th { color: var(--muted); font-weight: 600; }
+  .swatch { display: inline-block; width: 22px; height: 22px; vertical-align: middle; margin-right: 8px; border: 1px solid rgba(127,127,127,.35); }
+  .note { color: var(--muted); font-size: 0.9rem; }
+
+  /* Component previews. Each preview sets its own colours, so it looks the same in either page theme. */
+  .previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .phone {
+    --surface: #ffffff; --on-surface: #0e1116; --on-surface-variant: #5a6270; --primary: #1668c8;
+    --on-primary: #ffffff; --progress: #1979e4; --outline: #dde1e7; --error: #df0035;
+    --error-container: #fde6eb; --on-error-container: #5c0016;
+    background: var(--surface); color: var(--on-surface); border: 1px solid var(--rule);
+  }
+  .phone.dark {
+    --surface: #0b0d10; --on-surface: #f4f6fa; --on-surface-variant: #a3acb8; --primary: #6aaaf2;
+    --on-primary: #001a3a; --progress: #1979e4; --outline: #2a3038; --error: #ff6b86;
+    --error-container: #5c0016; --on-error-container: #ffd9df;
+  }
+  .phone .caption { font-size: 0.75rem; color: var(--on-surface-variant); padding: 6px 16px; border-bottom: 1px solid var(--outline); }
+  .bar { padding: 12px 16px 8px; }
+  .bar .title { font-family: "Poppins", Arial, sans-serif; font-weight: 700; font-size: 20px; }
+  .bar .sub { font-size: 12px; color: var(--on-surface-variant); }
+  .progress { height: 4px; background: var(--outline); }
+  .progress span { display: block; width: 40%; height: 100%; background: var(--progress); }
+  .banner { background: var(--error-container); color: var(--on-error-container); padding: 8px 8px 8px 16px; display: flex; align-items: center; gap: 8px; }
+  .banner div { flex: 1; font-size: 14px; }
+  .banner small { display: block; font-size: 12px; }
+  .text-btn { font-family: "Poppins", Arial, sans-serif; font-weight: 500; font-size: 14px; color: var(--primary); padding: 8px 12px; }
+  .header { font-family: "Poppins", Arial, sans-serif; font-weight: 500; font-size: 14px; letter-spacing: .02em; color: var(--primary); padding: 12px 16px; border-bottom: 1px solid var(--outline); }
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--outline); font-size: 16px; }
+  .row .res { font-size: 14px; }
+  .row .err { font-size: 14px; color: var(--error); }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--outline); border-top-color: var(--primary); border-radius: 50%; }
+  .footer { text-align: center; font-size: 12px; color: var(--on-surface-variant); padding: 24px 16px; }
+  .center { text-align: center; padding: 40px 16px; }
+  .center .t { font-family: "Poppins", Arial, sans-serif; font-weight: 500; font-size: 16px; }
+  .center .d { font-size: 14px; color: var(--on-surface-variant); margin: 8px 0 16px; }
+  .btn { display: inline-block; background: var(--primary); color: var(--on-primary); font-family: "Poppins", Arial, sans-serif; font-weight: 500; font-size: 14px; padding: 10px 24px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Brand guidelines</h1>
+  <p class="lede">The design system for the NavVis mobile challenge app: colours, type, spacing and how each part of the screen looks.</p>
+
+  <p>The values come from the public NavVis website (<code>navvis.com</code>, read on 2026-11-20): its stylesheet, CSS variables and fonts. Some had to be adjusted for contrast or for dark mode, and the site has no mobile app styles. Every value marked "chosen" below is my own choice, made to fit the site.</p>
+
+  <h2>What the website uses</h2>
+  <ul>
+    <li>Primary blue <code>#1979E4</code> for buttons and links (the most used colour in the stylesheet).</li>
+    <li>Accent green <code>#1FE179</code> for secondary buttons and link hover.</li>
+    <li>Page background <code>#F4F6FA</code>, text <code>#000000</code>, light grey <code>#EBEBEB</code>, dark grey <code>#353436</code>.</li>
+    <li>Error red <code>#DF0035</code> (and a brighter <code>#F80945</code>).</li>
+    <li>Poppins for headings, menus and buttons (weight 700), Open Sans for body text (weight 400).</li>
+    <li>Square corners: every border radius on the site is 0.</li>
+  </ul>
+  <p>The NavVis logo is not used anywhere in the app.</p>
+
+  <h2>Colour tokens</h2>
+  <p>Mapped to Material 3 colour roles. Contrast is against the colour the token is shown on. WCAG AA needs 4.5:1 for normal text and 3:1 for large text and UI parts like progress bars.</p>
+
+  <h3>Light</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Role</th><th>Colour</th><th>Source</th><th>Contrast</th></tr></thead>
+    <tbody>
+      <tr><td><code>primary</code></td><td><span class="swatch" style="background:#1668C8"></span>#1668C8</td><td>Chosen: site blue made darker</td><td>5.46 on white</td></tr>
+      <tr><td><code>onPrimary</code></td><td><span class="swatch" style="background:#FFFFFF"></span>#FFFFFF</td><td>Site</td><td>5.46 on primary</td></tr>
+      <tr><td><code>progress</code> (app token, not a Material role)</td><td><span class="swatch" style="background:#1979E4"></span>#1979E4</td><td>Site blue</td><td>4.29 on white</td></tr>
+      <tr><td><code>secondary</code></td><td><span class="swatch" style="background:#1FE179"></span>#1FE179</td><td>Site green</td><td>Fill only: 1.73 on white</td></tr>
+      <tr><td><code>onSecondary</code></td><td><span class="swatch" style="background:#000000"></span>#000000</td><td>Site</td><td>12.10 on green</td></tr>
+      <tr><td><code>background</code></td><td><span class="swatch" style="background:#F4F6FA"></span>#F4F6FA</td><td>Site</td><td>–</td></tr>
+      <tr><td><code>surface</code></td><td><span class="swatch" style="background:#FFFFFF"></span>#FFFFFF</td><td>Site</td><td>–</td></tr>
+      <tr><td><code>onSurface</code></td><td><span class="swatch" style="background:#0E1116"></span>#0E1116</td><td>Chosen: near the site's black</td><td>18.91 on white</td></tr>
+      <tr><td><code>onSurfaceVariant</code></td><td><span class="swatch" style="background:#5A6270"></span>#5A6270</td><td>Chosen</td><td>6.15 on white</td></tr>
+      <tr><td><code>outline</code> (dividers)</td><td><span class="swatch" style="background:#DDE1E7"></span>#DDE1E7</td><td>Chosen: near the site's #EBEBEB</td><td>Decorative</td></tr>
+      <tr><td><code>error</code></td><td><span class="swatch" style="background:#DF0035"></span>#DF0035</td><td>Site</td><td>5.01 on white</td></tr>
+      <tr><td><code>errorContainer</code></td><td><span class="swatch" style="background:#FDE6EB"></span>#FDE6EB</td><td>Chosen</td><td>–</td></tr>
+      <tr><td><code>onErrorContainer</code></td><td><span class="swatch" style="background:#5C0016"></span>#5C0016</td><td>Chosen</td><td>12.06 on container</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note">The site's blue is 4.29:1 on white, just under 4.5, so text and buttons use a slightly darker blue. The original blue is kept for the progress bar, which only needs 3:1. The green fails on white for text and thin lines, so it only appears as a fill behind black text.</p>
+
+  <h3>Dark</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Role</th><th>Colour</th><th>Source</th><th>Contrast</th></tr></thead>
+    <tbody>
+      <tr><td><code>primary</code></td><td><span class="swatch" style="background:#6AAAF2"></span>#6AAAF2</td><td>Chosen: site blue made lighter</td><td>8.01 on surface</td></tr>
+      <tr><td><code>onPrimary</code></td><td><span class="swatch" style="background:#001A3A"></span>#001A3A</td><td>Chosen</td><td>7.15 on primary</td></tr>
+      <tr><td><code>progress</code> (app token, not a Material role)</td><td><span class="swatch" style="background:#1979E4"></span>#1979E4</td><td>Site blue</td><td>4.54 on surface</td></tr>
+      <tr><td><code>secondary</code></td><td><span class="swatch" style="background:#1FE179"></span>#1FE179</td><td>Site green</td><td>11.22 on surface</td></tr>
+      <tr><td><code>background</code>, <code>surface</code></td><td><span class="swatch" style="background:#0B0D10"></span>#0B0D10</td><td>Chosen: near the site's black sections</td><td>–</td></tr>
+      <tr><td><code>onSurface</code></td><td><span class="swatch" style="background:#F4F6FA"></span>#F4F6FA</td><td>Site</td><td>17.98 on surface</td></tr>
+      <tr><td><code>onSurfaceVariant</code></td><td><span class="swatch" style="background:#A3ACB8"></span>#A3ACB8</td><td>Chosen</td><td>8.48 on surface</td></tr>
+      <tr><td><code>outline</code> (dividers)</td><td><span class="swatch" style="background:#2A3038"></span>#2A3038</td><td>Chosen</td><td>Decorative</td></tr>
+      <tr><td><code>error</code></td><td><span class="swatch" style="background:#FF6B86"></span>#FF6B86</td><td>Chosen: site red made lighter</td><td>7.13 on surface</td></tr>
+      <tr><td><code>errorContainer</code></td><td><span class="swatch" style="background:#5C0016"></span>#5C0016</td><td>Chosen</td><td>–</td></tr>
+      <tr><td><code>onErrorContainer</code></td><td><span class="swatch" style="background:#FFD9DF"></span>#FFD9DF</td><td>Chosen</td><td>11.07 on container</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note">The site has no dark theme of its own, only black sections. All dark values are chosen. Android 12 dynamic colour (colours from the wallpaper) is turned off, so the brand colours are always used.</p>
+
+  <h2>Typography</h2>
+  <p>Both fonts are on Google Fonts under the SIL Open Font License, so they can be bundled with the app. Only two Poppins weights are bundled, to keep the APK small.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Material style</th><th>Font</th><th>Size / line height</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td><code>titleLarge</code></td><td>Poppins 700</td><td>20 / 28 sp</td><td>App name in the top bar</td></tr>
+      <tr><td><code>titleMedium</code></td><td>Poppins 500</td><td>16 / 24 sp</td><td>Error screen title</td></tr>
+      <tr><td><code>titleSmall</code></td><td>Poppins 500</td><td>14 / 20 sp</td><td>Section headers</td></tr>
+      <tr><td><code>labelLarge</code></td><td>Poppins 500</td><td>14 / 20 sp</td><td>Buttons</td></tr>
+      <tr><td><code>bodyLarge</code></td><td>Open Sans 400</td><td>16 / 24 sp</td><td>Row titles, loading and empty messages</td></tr>
+      <tr><td><code>bodyMedium</code></td><td>Open Sans 400</td><td>14 / 20 sp</td><td>Results, error reasons</td></tr>
+      <tr><td><code>bodySmall</code></td><td>Open Sans 400</td><td>12 / 16 sp</td><td>Subtitle, footer</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note">The website uses weight 700 for menu titles and buttons. In the app, 700 only goes on the app name; at 14 sp on a phone, 500 reads better. Chosen.</p>
+
+  <h2>Spacing and shape</h2>
+  <ul>
+    <li>16 dp side padding everywhere.</li>
+    <li>Rows and section headers: 12 dp top and bottom padding, 1 dp divider under each.</li>
+    <li>Banner: 8 dp top and bottom, 16 dp left, 8 dp right (the Retry button brings its own padding).</li>
+    <li>Footer: 24 dp top and bottom.</li>
+    <li>Corners are square (0 dp) on buttons, menus and banners, like the website. Spinners stay round.</li>
+  </ul>
+
+  <h2>Components</h2>
+  <p>Light on the left, dark on the right.</p>
+
+  <h3>Top bar, progress and section</h3>
+  <div class="previews">
+    <div class="phone">
+      <div class="bar"><div class="title">Mobile Challenge</div><div class="sub">Mock data: Normal data</div></div>
+      <div class="progress"><span></span></div>
+      <div class="header">SECTION 1</div>
+      <div class="row"><span>Item 4</span></div>
+      <div class="row"><span>Item 4</span><span class="res">result=03</span></div>
+      <div class="row"><span>Item 4</span><span class="spinner"></span></div>
+      <div class="row"><span>Item 5</span><span class="err">missing input</span></div>
+    </div>
+    <div class="phone dark">
+      <div class="bar"><div class="title">Mobile Challenge</div><div class="sub">Mock data: Normal data</div></div>
+      <div class="progress"><span></span></div>
+      <div class="header">SECTION 1</div>
+      <div class="row"><span>Item 4</span></div>
+      <div class="row"><span>Item 4</span><span class="res">result=03</span></div>
+      <div class="row"><span>Item 4</span><span class="spinner"></span></div>
+      <div class="row"><span>Item 5</span><span class="err">missing input</span></div>
+    </div>
+  </div>
+  <p class="note">A row shows nothing, a result, a 16 dp spinner with a 2 dp stroke, or an error reason in the error colour. Section headers are in the primary colour.</p>
+
+  <h3>Banner and footer</h3>
+  <div class="previews">
+    <div class="phone">
+      <div class="banner"><div>Couldn't load more inputs<small>Server error (503)</small></div><span class="text-btn">Retry</span></div>
+      <div class="row"><span>Item 1</span><span class="res">result=48</span></div>
+      <div class="footer">200 numbers shown, 0 skipped, 97 results</div>
+    </div>
+    <div class="phone dark">
+      <div class="banner"><div>Couldn't load more inputs<small>Server error (503)</small></div><span class="text-btn">Retry</span></div>
+      <div class="row"><span>Item 1</span><span class="res">result=48</span></div>
+      <div class="footer">200 numbers shown, 0 skipped, 97 results</div>
+    </div>
+  </div>
+
+  <h3>Empty and error screens</h3>
+  <div class="previews">
+    <div class="phone">
+      <div class="center"><div class="d">No valid numbers. 200 values were skipped.</div></div>
+      <div class="center" style="border-top:1px solid var(--outline)"><div class="t">Couldn't load numbers</div><div class="d">Request failed (404)</div><span class="btn">Retry</span></div>
+    </div>
+    <div class="phone dark">
+      <div class="center"><div class="d">No valid numbers. 200 values were skipped.</div></div>
+      <div class="center" style="border-top:1px solid var(--outline)"><div class="t">Couldn't load numbers</div><div class="d">Request failed (404)</div><span class="btn">Retry</span></div>
+    </div>
+  </div>
+  <p class="note">Messages are centred. The Retry button is filled with the primary colour and has square corners.</p>
+</main>
+</body>
+</html>
