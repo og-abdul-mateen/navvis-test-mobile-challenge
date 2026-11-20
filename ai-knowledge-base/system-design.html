@@ -78,13 +78,15 @@
 <body>
 <main>
   <h1>System design</h1>
-  <p class="lede">Proposed architecture for the NavVis mobile challenge (Android, Kotlin, Jetpack Compose).</p>
+  <p class="lede">Architecture of the NavVis mobile challenge app (Android, Kotlin, Jetpack Compose), as built.</p>
 
-  <p>The app is one Gradle module split into three packages: <code>ui</code>, <code>domain</code> and <code>data</code>. Each layer only calls the layer below it. The domain package is plain Kotlin with no Android imports, so it can be tested with JUnit alone.</p>
+  <p>The app is one Gradle module split into three packages: <code>ui</code>, <code>domain</code> and <code>data</code>, plus <code>di</code> for wiring. Each layer only calls the layer below it. The domain package is plain Kotlin with no Android or data-layer imports, so it can be tested with JUnit alone.</p>
+
+  <p>This page started as the plan written before any code. It was updated at the end to match the code; the differences are listed under "What changed since the first version".</p>
 
   <h2>Diagram</h2>
   <figure>
-    <svg viewBox="0 0 760 470" role="img" aria-label="Architecture diagram with UI, domain and data layers">
+    <svg viewBox="0 0 760 500" role="img" aria-label="Architecture diagram with UI, domain and data layers">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path class="head" d="M0,0 L10,5 L0,10 z"/>
@@ -92,57 +94,59 @@
       </defs>
 
       <!-- UI layer -->
-      <rect class="band" x="10" y="10" width="740" height="115" rx="10"/>
+      <rect class="band" x="10" y="10" width="740" height="125" rx="10"/>
       <text class="band-label" x="24" y="32">UI</text>
-      <rect class="box" x="40" y="48" width="220" height="56" rx="8"/>
-      <text class="name" x="150" y="72" text-anchor="middle">StreamScreen</text>
-      <text class="sub" x="150" y="90" text-anchor="middle">Compose, LazyColumn</text>
-      <rect class="box" x="460" y="48" width="260" height="56" rx="8"/>
-      <text class="name" x="590" y="72" text-anchor="middle">StreamViewModel</text>
-      <text class="sub" x="590" y="90" text-anchor="middle">row store, pairing, StateFlow</text>
-      <line class="edge" x1="460" y1="66" x2="262" y2="66" marker-end="url(#arrow)"/>
-      <text class="edge-label" x="360" y="60" text-anchor="middle">UiState</text>
-      <line class="edge" x1="260" y1="88" x2="458" y2="88" marker-end="url(#arrow)"/>
-      <text class="edge-label" x="360" y="104" text-anchor="middle">retry</text>
+      <rect class="box" x="40" y="48" width="230" height="66" rx="8"/>
+      <text class="name" x="155" y="72" text-anchor="middle">StreamScreen</text>
+      <text class="sub" x="155" y="90" text-anchor="middle">LazyColumn, banner, error views,</text>
+      <text class="sub" x="155" y="105" text-anchor="middle">scenario menu</text>
+      <rect class="box" x="450" y="48" width="270" height="66" rx="8"/>
+      <text class="name" x="585" y="72" text-anchor="middle">StreamViewModel</text>
+      <text class="sub" x="585" y="90" text-anchor="middle">sessions, pairing, row store,</text>
+      <text class="sub" x="585" y="105" text-anchor="middle">rebuild at most every 100 ms</text>
+      <line class="edge" x1="450" y1="68" x2="272" y2="68" marker-end="url(#arrow)"/>
+      <text class="edge-label" x="361" y="62" text-anchor="middle">UiState</text>
+      <line class="edge" x1="270" y1="96" x2="448" y2="96" marker-end="url(#arrow)"/>
+      <text class="edge-label" x="361" y="112" text-anchor="middle">retry, pick scenario</text>
 
       <!-- Domain layer -->
-      <rect class="band" x="10" y="145" width="740" height="115" rx="10"/>
-      <text class="band-label" x="24" y="167">DOMAIN</text>
-      <rect class="box" x="40" y="183" width="160" height="56" rx="8"/>
-      <text class="name" x="120" y="207" text-anchor="middle">NumberParser</text>
-      <text class="sub" x="120" y="225" text-anchor="middle">bits to section, item</text>
-      <rect class="box" x="215" y="183" width="160" height="56" rx="8"/>
-      <text class="name" x="295" y="207" text-anchor="middle">ResultComputer</text>
-      <text class="sub" x="295" y="225" text-anchor="middle">background, cached</text>
-      <rect class="box" x="390" y="183" width="190" height="56" rx="8"/>
-      <text class="name" x="485" y="207" text-anchor="middle">SectionListBuilder</text>
-      <text class="sub" x="485" y="225" text-anchor="middle">group and sort</text>
-      <line class="edge" x1="520" y1="104" x2="520" y2="143" marker-end="url(#arrow)"/>
-      <text class="edge-label" x="528" y="130">calls all three</text>
+      <rect class="band" x="10" y="155" width="740" height="115" rx="10"/>
+      <text class="band-label" x="24" y="177">DOMAIN</text>
+      <rect class="box" x="40" y="193" width="160" height="56" rx="8"/>
+      <text class="name" x="120" y="217" text-anchor="middle">NumberParser</text>
+      <text class="sub" x="120" y="235" text-anchor="middle">bits to section, item</text>
+      <rect class="box" x="215" y="193" width="175" height="56" rx="8"/>
+      <text class="name" x="302" y="217" text-anchor="middle">ResultComputer</text>
+      <text class="sub" x="302" y="235" text-anchor="middle">semaphore, timeout, cache</text>
+      <rect class="box" x="405" y="193" width="180" height="56" rx="8"/>
+      <text class="name" x="495" y="217" text-anchor="middle">SectionListBuilder</text>
+      <text class="sub" x="495" y="235" text-anchor="middle">group and sort</text>
+      <line class="edge" x1="520" y1="114" x2="520" y2="153" marker-end="url(#arrow)"/>
+      <text class="edge-label" x="528" y="140">calls all three</text>
 
       <!-- Data layer -->
-      <rect class="band" x="10" y="280" width="740" height="180" rx="10"/>
-      <text class="band-label" x="24" y="302">DATA</text>
-      <line class="edge" x1="680" y1="104" x2="680" y2="316" marker-end="url(#arrow)"/>
-      <text class="edge-label" x="672" y="273" text-anchor="end">collects Flow of chunks</text>
-      <rect class="box" x="480" y="318" width="240" height="56" rx="8"/>
-      <text class="name" x="600" y="342" text-anchor="middle">StreamRepository</text>
-      <text class="sub" x="600" y="360" text-anchor="middle">paging loop, retry with backoff</text>
-      <rect class="box" x="200" y="318" width="220" height="56" rx="8"/>
-      <text class="name" x="310" y="342" text-anchor="middle">StreamApi</text>
-      <text class="sub" x="310" y="360" text-anchor="middle">OkHttp, tolerant JSON decoding</text>
-      <line class="edge" x1="480" y1="346" x2="422" y2="346" marker-end="url(#arrow)"/>
+      <rect class="band" x="10" y="290" width="740" height="200" rx="10"/>
+      <text class="band-label" x="24" y="312">DATA</text>
+      <line class="edge" x1="680" y1="114" x2="680" y2="326" marker-end="url(#arrow)"/>
+      <text class="edge-label" x="672" y="283" text-anchor="end">collects Flow of chunks</text>
+      <rect class="box" x="470" y="328" width="250" height="56" rx="8"/>
+      <text class="name" x="595" y="352" text-anchor="middle">StreamRepository</text>
+      <text class="sub" x="595" y="370" text-anchor="middle">paging loop, retry with backoff</text>
+      <rect class="box" x="190" y="328" width="240" height="56" rx="8"/>
+      <text class="name" x="310" y="352" text-anchor="middle">StreamApi</text>
+      <text class="sub" x="310" y="370" text-anchor="middle">OkHttp, element-by-element decoding</text>
+      <line class="edge" x1="470" y1="356" x2="432" y2="356" marker-end="url(#arrow)"/>
 
-      <rect class="box" x="60" y="398" width="180" height="46" rx="8"/>
-      <text class="name" x="150" y="420" text-anchor="middle">MockInterceptor</text>
-      <text class="sub" x="150" y="436" text-anchor="middle">mock build</text>
-      <rect class="box-ext" x="280" y="398" width="180" height="46" rx="8"/>
-      <text class="name" x="370" y="420" text-anchor="middle">navvis.com</text>
-      <text class="sub" x="370" y="436" text-anchor="middle">real build (404 today)</text>
-      <line class="edge" x1="280" y1="374" x2="170" y2="396" marker-end="url(#arrow)"/>
-      <line class="edge" x1="340" y1="374" x2="360" y2="396" marker-end="url(#arrow)"/>
+      <rect class="box" x="40" y="414" width="220" height="56" rx="8"/>
+      <text class="name" x="150" y="438" text-anchor="middle">MockInterceptor</text>
+      <text class="sub" x="150" y="456" text-anchor="middle">mock build, one per session</text>
+      <rect class="box-ext" x="300" y="414" width="180" height="56" rx="8"/>
+      <text class="name" x="390" y="438" text-anchor="middle">navvis.com</text>
+      <text class="sub" x="390" y="456" text-anchor="middle">real build (404 today)</text>
+      <line class="edge" x1="270" y1="384" x2="180" y2="412" marker-end="url(#arrow)"/>
+      <line class="edge" x1="350" y1="384" x2="375" y2="412" marker-end="url(#arrow)"/>
     </svg>
-    <figcaption>Arrows point in the direction of the call. The one exception is UiState, which the screen observes. Data comes back up as Kotlin flows.</figcaption>
+    <figcaption>Arrows point in the direction of the call. The one exception is UiState, which the screen observes. Data comes back up as Kotlin flows. AppContainer (not drawn) builds the data and domain objects and hands them to the ViewModel.</figcaption>
   </figure>
 
   <h2>Components</h2>
@@ -150,41 +154,69 @@
   <table>
     <thead><tr><th>Class</th><th>Job</th></tr></thead>
     <tbody>
-      <tr><td><code>StreamScreen</code></td><td>Draws section headers and rows in a <code>LazyColumn</code>. Shows each stream's status, a count of skipped numbers, and a Retry button when a stream fails. Contains no logic.</td></tr>
-      <tr><td><code>StreamViewModel</code></td><td>Collects both streams, stores rows by index, pairs number <code>i</code> with input <code>i</code>, asks for results, and exposes one <code>StateFlow&lt;UiState&gt;</code>.</td></tr>
-      <tr><td><code>NumberParser</code></td><td>Turns a raw JSON value into section, item and result flag, or marks it invalid.</td></tr>
-      <tr><td><code>ResultComputer</code></td><td>Runs the slow computation on <code>Dispatchers.Default</code> with a cap on parallel jobs, a timeout, and a cache keyed by input value.</td></tr>
-      <tr><td><code>SectionListBuilder</code></td><td>Groups rows by section and sorts them by the rules in <code>assumptions.md</code>.</td></tr>
-      <tr><td><code>StreamRepository</code></td><td>Requests chunks in a loop until it gets an empty array. Retries failed requests with exponential backoff and jitter. Exposes <code>numbers()</code> and <code>inputs()</code> as flows.</td></tr>
-      <tr><td><code>StreamApi</code></td><td>Makes the HTTP call and decodes the array element by element, so one bad value doesn't drop the whole chunk.</td></tr>
-      <tr><td><code>MockInterceptor</code></td><td>OkHttp interceptor that returns fake responses for a chosen scenario (truncation, nulls, server errors, a large dataset).</td></tr>
+      <tr><td><code>StreamScreen</code></td><td>Draws one <code>UiState</code>: section headers and rows in a <code>LazyColumn</code> (one <code>items()</code> call per section), the progress bar, the summary footer, and the loading and empty states. Holds no logic. <code>StreamRoute</code> connects it to the ViewModel.</td></tr>
+      <tr><td><code>ErrorViews</code></td><td>The full-screen error with Retry, the banner shown above the rows when a stream fails later, and the plain-language text for each error.</td></tr>
+      <tr><td><code>ScenarioMenu</code></td><td>The top bar menu in the mock build for picking a mock scenario.</td></tr>
+      <tr><td><code>StreamViewModel</code></td><td>Runs a session: collects both streams, stores rows and inputs by stream index, pairs number <code>i</code> with input <code>i</code>, starts computations, and marks rows past the last input as missing. Rebuilds the state off the main thread at most every 100 ms. Picking a scenario cancels the session and starts a new one.</td></tr>
+      <tr><td><code>UiState</code>, <code>buildUiState</code></td><td>One value for the whole screen: Loading, Empty, Content or Error. <code>buildUiState</code> picks it from the rows and the status of both streams.</td></tr>
+      <tr><td><code>SessionTimer</code></td><td>Logs when the first rows show, when both streams finish, and when all results are done (logcat tag <code>StreamTiming</code>).</td></tr>
+      <tr><td><code>NumberParser</code></td><td>Turns a number into section, item and result flag, or rejects it (null, outside 0 to 255, item without a title).</td></tr>
+      <tr><td><code>ResultComputer</code></td><td>Runs the computation on <code>Dispatchers.Default</code>. A fair <code>Semaphore</code> limits it to cores minus one at a time, the 2 s timeout starts only once a job has its turn, and results are cached by input.</td></tr>
+      <tr><td><code>SimulatedAlgorithm</code></td><td>Stands in for the real algorithm: returns <code>input % 100</code> and sleeps 1 to 5 ms, with about 1 in 100 inputs taking up to 3 s.</td></tr>
+      <tr><td><code>SectionListBuilder</code></td><td>Groups rows by section and sorts them: item, then no result, results from low to high, pending, errors, then stream order.</td></tr>
+      <tr><td><code>StreamRepository</code></td><td>Requests chunks until it gets an empty array, retries with exponential backoff and jitter (<code>RetryPolicy</code>), and remembers each stream's position so a retry carries on where it stopped.</td></tr>
+      <tr><td><code>StreamApi</code></td><td>Makes one HTTP call. Reads and closes the response on OkHttp's thread, and returns typed errors instead of throwing.</td></tr>
+      <tr><td><code>ChunkDecoder</code></td><td>Decodes each array element on its own, so one bad value doesn't drop the whole chunk.</td></tr>
+      <tr><td><code>MockInterceptor</code></td><td>Answers both endpoints inside OkHttp in the mock build. Hands out the next chunk per request, and can fail requests on purpose before taking a chunk.</td></tr>
+      <tr><td><code>MockScenarioType</code></td><td>The ten mock scenarios, from normal data to messy values, server errors and 100,000 numbers.</td></tr>
+      <tr><td><code>AppContainer</code></td><td>Builds the shared objects. In the mock build each session gets a new mock server; the real build keeps one repository for the whole process.</td></tr>
     </tbody>
   </table>
   </div>
 
   <h2>How data moves</h2>
   <ol>
-    <li>The ViewModel starts collecting <code>numbers()</code> and <code>inputs()</code> in parallel inside <code>viewModelScope</code>.</li>
-    <li>Each chunk is appended to the row store at the next free index. Numbers are parsed as they arrive.</li>
-    <li>If a row needs a result and its input has arrived, the ViewModel asks <code>ResultComputer</code> for it. Until then the row shows as pending.</li>
-    <li>Every change marks the store as dirty. A single collector rebuilds the sorted list off the main thread at most once every 100 ms and publishes it as <code>UiState</code>.</li>
-    <li>If a stream still fails after its retries, its status becomes failed. Retry picks up from the last index received.</li>
+    <li>A session starts: the ViewModel gets a repository from <code>AppContainer</code> and collects <code>numbers()</code> and <code>inputs()</code> at the same time.</li>
+    <li>Each chunk comes with the stream index of its first value. Numbers are parsed as they arrive; invalid ones are counted as skipped.</li>
+    <li>When both a row that needs a result and its input have arrived, whichever came second starts the computation. Until it finishes, the row shows a spinner.</li>
+    <li>When the inputs stream finishes, rows past its last index become "missing input".</li>
+    <li>Every change bumps a counter in a <code>StateFlow</code>. The rebuild loop snapshots the rows on the main thread, groups and sorts them on <code>Dispatchers.Default</code>, publishes the new <code>UiState</code>, then waits 100 ms. Changes during the build or the wait are combined into the next rebuild.</li>
+    <li>If a stream still fails after its retries, its status becomes failed: a full-screen error if no rows are showing, a banner if they are. Retry continues from the next index.</li>
+    <li>Picking a scenario in the mock build cancels the session's scope, which stops its collectors and computations, and starts a new session with empty rows.</li>
   </ol>
 
   <h2>Design decisions</h2>
   <ul>
     <li>One module with packages per layer. Splitting into Gradle modules would add build setup without much benefit at this size.</li>
-    <li>Manual dependency injection through a small <code>AppContainer</code>. Hilt would work, but it is a lot of setup for eight classes.</li>
-    <li>The mock sits inside OkHttp, so mock mode still runs the real decoding and retry code. A <code>mock</code> and a <code>real</code> product flavor pick which one is installed.</li>
-    <li>The list is rebuilt on a timer, not on every event. With hundreds of results finishing per second, rebuilding on each one would waste CPU and cause visible jank.</li>
+    <li>Manual dependency injection through a small <code>AppContainer</code>. Hilt would work, but it is a lot of setup for this many classes.</li>
+    <li>The mock sits inside OkHttp, so the mock build runs the real decoding and retry code. A <code>mock</code> and a <code>real</code> product flavor pick which one is installed.</li>
+    <li>The list is rebuilt on a timer, not on every event. With thousands of results finishing per second, rebuilding on each one would waste CPU and cause jank.</li>
+    <li>Each run of the streams is a session with its own coroutine scope, a child of <code>viewModelScope</code>. Cancelling it is how switching scenarios stops all old work at once.</li>
+    <li>The computation timeout starts after a job gets its turn. Otherwise, with 100,000 inputs, most jobs would time out while still waiting in line.</li>
+    <li>HTTP responses are read and closed on OkHttp's thread. Closing an unread HTTP/2 response writes to the network, which Android forbids on the main thread.</li>
+    <li>Release builds use R8, and a <code>benchmark</code> build type (release settings, debug key) is used to measure performance.</li>
+  </ul>
+
+  <h2>What changed since the first version</h2>
+  <p>Things the first plan didn't have, all added while building and testing:</p>
+  <ul>
+    <li>Sessions in the ViewModel and a mock server per session, for the scenario menu.</li>
+    <li>Ten mock scenarios, including ones that fail requests on purpose.</li>
+    <li>The error views (full screen and banner) as their own file.</li>
+    <li>A semaphore in <code>ResultComputer</code> so the timeout doesn't count queue time.</li>
+    <li>Reading and closing responses in OkHttp's callback, after a crash on the main thread.</li>
+    <li><code>items()</code> per section instead of <code>item()</code> per row, after measuring jank with 100,000 rows.</li>
+    <li><code>SessionTimer</code> and the <code>benchmark</code> build type, for performance numbers.</li>
+    <li>The NavVis theme, from <code>brand_guidelines.html</code>.</li>
   </ul>
 
   <h2>Package layout</h2>
 <pre><code>com.navvistest.mobilechallenge
-├── ui/          StreamScreen, StreamViewModel, UiState
-├── domain/      NumberParser, ResultComputer, SectionListBuilder, models
-├── data/        StreamRepository, StreamApi, DTOs
-│   └── mock/    MockInterceptor, scenarios
+├── ui/          StreamScreen, ErrorViews, ScenarioMenu, StreamViewModel, UiState, SessionTimer
+│   └── theme/   colours, fonts, shapes
+├── domain/      NumberParser, ResultComputer, SimulatedAlgorithm, SectionListBuilder, row models
+├── data/        StreamRepository, RetryPolicy, StreamApi, ChunkDecoder, result and event types
+│   └── mock/    MockInterceptor, MockScenario, MockScenarioType
 └── di/          AppContainer</code></pre>
 </main>
 </body>

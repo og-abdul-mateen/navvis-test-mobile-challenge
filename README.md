@@ -77,7 +77,7 @@ The app is one module with three layers.
 
 The list is rebuilt off the main thread at most every 100 ms, however fast data arrives. The first change shows at once.
 
-[system-design.html](ai-knowledge-base/system-design.html) is the design I wrote before starting, with a diagram. The code follows it, with a few additions that were added later e.g. the sessions in the ViewModel for switching scenarios, the error views, and the scenario menu were not initially planned, but became part of the project later on.
+[system-design.html](ai-knowledge-base/system-design.html) has the architecture with a diagram. It started as the design I wrote before starting and was updated at the end to match the code. A few parts were not initially planned but became part of the project later on, e.g. the sessions in the ViewModel for switching scenarios, the error views, and the scenario menu. The page lists all of them.
 
 ## Assumptions
 
