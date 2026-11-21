@@ -74,7 +74,7 @@ class StreamViewModel(
     private var numbersStatus: StreamStatus = StreamStatus.Fetching
     private var inputsStatus: StreamStatus = StreamStatus.Fetching
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
+    private val _uiState = MutableStateFlow<UiState>(UiState.Ready)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     /**
@@ -89,21 +89,41 @@ class StreamViewModel(
     /** Mock build only: show each row's number, bits and input under it. Kept across scenarios. */
     val showRawValues: StateFlow<Boolean> = _showRawValues.asStateFlow()
 
+    /** False until START is pressed, and again after picking a new scenario. */
+    private var isRunning = false
+
     init {
         viewModelScope.launch { rebuildLoop() }
+    }
+
+    /** Starts fetching. Nothing is requested before this, since every request uses up server data. */
+    fun start() {
+        if (isRunning) return
+        isRunning = true
         startSession()
     }
 
-    /** Throws away the current run and starts again with [scenario]. It's only used in the mock build. */
+    /**
+     * Throws away the current run and goes back to the START button, with [scenario] picked.
+     * It's only used in the mock build.
+     */
     fun selectScenario(scenario: MockScenarioType) {
         if (_scenario.value == null) return
         _scenario.value = scenario
-        startSession()
+        stopSession()
+        _uiState.value = UiState.Ready
     }
 
     fun toggleRawValues() {
         _showRawValues.value = !_showRawValues.value
         publish()
+    }
+
+    private fun stopSession() {
+        isRunning = false
+        if (::session.isInitialized) session.cancel()
+        rows.clear()
+        inputs.clear()
     }
 
     private fun startSession() {
@@ -230,6 +250,7 @@ class StreamViewModel(
     private suspend fun rebuildLoop() {
         // drop(1) skips the starting value, which would only rebuild the initial Loading state.
         changeCount.drop(1).collect {
+            if (!isRunning) return@collect
             val snapshot = rows.values.toList()
             val skipped = skippedCount
             val numbers = numbersStatus
@@ -241,6 +262,9 @@ class StreamViewModel(
                 buildUiState(snapshot, skipped, numbers, inputsState, rawInputs) to
                     snapshot.any { it.result == RowResult.Pending }
             }
+            // A scenario may have been picked while this was building. Its result belongs to a
+            // session that no longer exists, so it must not replace the START screen.
+            if (!isRunning || sessionTimer !== timer) return@collect
             _uiState.value = state
 
             if (state is UiState.Content) {

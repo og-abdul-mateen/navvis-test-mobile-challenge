@@ -176,13 +176,13 @@
 
   <h2>How data moves</h2>
   <ol>
-    <li>A session starts: the ViewModel gets a repository from <code>AppContainer</code> and collects <code>numbers()</code> and <code>inputs()</code> at the same time.</li>
+    <li>The app opens on a START button and fetches nothing yet. Pressing it starts a session: the ViewModel gets a repository from <code>AppContainer</code> and collects <code>numbers()</code> and <code>inputs()</code> at the same time.</li>
     <li>Each chunk comes with the stream index of its first value. Numbers are parsed as they arrive; invalid ones are counted as skipped.</li>
     <li>When both a row that needs a result and its input have arrived, whichever came second starts the computation. Until it finishes, the row shows a spinner.</li>
     <li>When the inputs stream finishes, rows past its last index become "missing input".</li>
     <li>Every change bumps a counter in a <code>StateFlow</code>. The rebuild loop snapshots the rows on the main thread, groups and sorts them on <code>Dispatchers.Default</code>, publishes the new <code>UiState</code>, then waits 100 ms. Changes during the build or the wait are combined into the next rebuild.</li>
     <li>If a stream still fails after its retries, its status becomes failed: a full-screen error if no rows are showing, a banner if they are. Retry continues from the next index.</li>
-    <li>Picking a scenario in the mock build cancels the session's scope, which stops its collectors and computations, and starts a new session with empty rows.</li>
+    <li>Picking a scenario in the mock build cancels the session's scope, which stops its collectors and computations, and goes back to START. The next START begins a new session with empty rows.</li>
   </ol>
 
   <h2>Design decisions</h2>

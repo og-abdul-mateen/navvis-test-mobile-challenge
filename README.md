@@ -39,7 +39,7 @@ cd mobile-challenge
 
 Both can be installed at once. The mock one has the package name `com.navvistest.mobilechallenge.mock`.
 
-In the mock build, the Scenario button in the top bar switches between ten sets of mock data. Picking one starts again from an empty list.
+The app opens on a START button and fetches nothing until you press it, since every request uses up data on the server. In the mock build, the Scenario button in the top bar switches between ten sets of mock data. Picking one goes back to START, so you can watch the new run from the beginning.
 
 | Scenario | What it shows |
 |---|---|
@@ -132,7 +132,7 @@ The fix was a one-liner: the list called `item()` for every row, which with 100,
 
 The first rows show after about 0.25 s and both streams finish in 15 to 18 s. Computing all results takes 86 to 96 s, which is almost all the simulated algorithm: about 50,000 computations, some of them deliberately slow outliers, 7 at a time. The screen stays smooth while that runs.
 
-To measure it yourself, install `mockBenchmark` (release settings, signed with the debug key), pick "100,000 numbers" and run `adb logcat -s StreamTiming`.
+To measure it yourself, install `mockBenchmark` (release settings, signed with the debug key), pick "100,000 numbers", press START and run `adb logcat -s StreamTiming`.
 
 ## Shortcuts
 
