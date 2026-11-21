@@ -3,6 +3,7 @@ package com.navvistest.mobilechallenge.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -25,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -57,6 +60,7 @@ fun StreamRoute(viewModel: StreamViewModel) {
         onScenarioSelected = viewModel::selectScenario,
         showRawValues = showRawValues,
         onToggleRawValues = viewModel::toggleRawValues,
+        onStart = viewModel::start,
     )
 }
 
@@ -71,6 +75,7 @@ fun StreamScreen(
     onScenarioSelected: (MockScenarioType) -> Unit = {},
     showRawValues: Boolean = false,
     onToggleRawValues: () -> Unit = {},
+    onStart: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -107,6 +112,7 @@ fun StreamScreen(
             .fillMaxSize()
             .padding(innerPadding)
         when (uiState) {
+            UiState.Ready -> ReadyState(onStart, contentModifier)
             UiState.Loading -> LoadingState(contentModifier)
             is UiState.Empty -> {
                 // Nothing at all vs. only bad values: the second case tells the user data did arrive.
@@ -140,6 +146,31 @@ fun StreamScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+/** Before anything is fetched. In the mock build, a scenario can be picked from the top bar first. */
+@Composable
+private fun ReadyState(onStart: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(R.string.state_ready),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Button(
+            onClick = onStart,
+            shape = RectangleShape,
+            modifier = Modifier.padding(top = 24.dp),
+            contentPadding = PaddingValues(horizontal = 40.dp, vertical = 14.dp),
+        ) {
+            Text(stringResource(R.string.start))
         }
     }
 }

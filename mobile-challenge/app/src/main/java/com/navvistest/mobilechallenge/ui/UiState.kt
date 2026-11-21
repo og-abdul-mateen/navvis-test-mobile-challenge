@@ -12,6 +12,9 @@ import com.navvistest.mobilechallenge.domain.SectionListBuilder
  */
 sealed interface UiState {
 
+    /** Nothing has been fetched yet. The user starts the streams with the START button. */
+    data object Ready : UiState
+
     /** No rows yet and the numbers stream is still fetching. */
     data object Loading : UiState
 
