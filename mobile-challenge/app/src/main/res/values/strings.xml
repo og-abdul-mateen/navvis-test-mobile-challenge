@@ -5,6 +5,8 @@
     <string name="scenario_menu">Scenario</string>
     <string name="backend_real">Using navvis.com</string>
 
+    <string name="state_ready">Streams numbers and inputs from the server and shows them by section.</string>
+    <string name="start">START</string>
     <string name="state_loading">Loading numbers…</string>
     <string name="state_empty">No numbers available.</string>
     <!-- Shown when numbers arrived but none of them could be shown. -->
